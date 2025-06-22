@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.function_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/function-service/gen/go/v1;function_service_v1";
+  
+service FunctionService {
+  rpc CreateFunction(CreateFunctionRequest) returns (CreateFunctionResponse);
+}
+
+message CreateFunctionRequest {
+  string user_id = 1;
+  string source_code_url = 2; 
+}     
+
+message CreateFunctionResponse {
+  string function_id = 1;
+  string status = 2;
+  string message = 3;
+}
+

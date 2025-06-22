@@ -1,7 +1,13 @@
 package handler
 
-type CommandHandler struct{}
+import (
+	"github.com/fadliarz/services/function-service/domain/application-service/service"
+)
+
+type CommandHandler struct {
+	service *service.FunctionApplicationService
+}
 
 func NewCommandHandler() *CommandHandler {
-	return &CommandHandler{}
+	return &CommandHandler{service: service.NewFunctionApplicationService()}
 }
