@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/fadliarz/services/function-service/domain/domain-core"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/domain-core"
 )
 
 type FunctionMapper struct{}
@@ -14,9 +14,9 @@ func NewFunctionMapper() *FunctionMapper {
 
 func (m *FunctionMapper) Entity(function *domain.Function) *FunctionEntity {
 	return &FunctionEntity{
-		UserID:        function.UserID.String(),
 		FunctionID:    function.FunctionID.String(),
-		SourceCodeURL: function.FunctionID.String(),
+		UserID:        function.UserID.String(),
+		SourceCodeURL: function.SourceCodeURL.String(),
 	}
 }
 

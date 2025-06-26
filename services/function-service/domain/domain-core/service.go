@@ -2,6 +2,8 @@ package domain
 
 import (
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 type FunctionDomainService struct{}
@@ -17,7 +19,7 @@ func (s *FunctionDomainService) ValidateAndInitiateFunction(function *Function) 
 		return defaultErr
 	}
 
-	functionId, err := NewFunctionID("uuid")
+	functionId, err := NewFunctionID(uuid.NewString())
 	if err != nil {
 		return defaultErr
 	}

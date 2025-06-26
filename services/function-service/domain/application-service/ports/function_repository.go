@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"github.com/fadliarz/services/function-service/domain/domain-core"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/domain-core"
 )
 
 type FunctionRepository interface {

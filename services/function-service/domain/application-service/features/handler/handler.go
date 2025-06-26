@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/fadliarz/services/function-service/domain/application-service/service"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/application-service/service"
 )
 
 type CommandHandler struct {

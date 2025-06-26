@@ -1,12 +1,10 @@
 package service
 
 import (
-	"errors"
-
-	"github.com/fadliarz/services/function-service/domain/application-service/features/command"
-	"github.com/fadliarz/services/function-service/domain/application-service/ports"
-	"github.com/fadliarz/services/function-service/domain/domain-core"
-	"github.com/fadliarz/services/function-service/infrastructure/repository"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/application-service/features/command"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/application-service/ports"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/domain-core"
+	"github.com/fadliarz/distributed-faas/services/function-service/infrastructure/repository"
 )
 
 type FunctionApplicationService struct {
@@ -21,16 +19,18 @@ func NewFunctionApplicationService() *FunctionApplicationService {
 }
 
 func (s *FunctionApplicationService) PersistFunction(cmd *command.CreateFunctionCommand) (domain.FunctionID, error) {
-	defaultErr := errors.New("")
-
 	function, err := s.mapper.CreateFunctionCommandToFunction(cmd)
 	if err != nil {
-		return "", defaultErr
+		return "", err
 	}
 
-	s.domainSvc.ValidateAndInitiateFunction(function)
+	if err := s.domainSvc.ValidateAndInitiateFunction(function); err != nil {
+		return "", err
+	}
 
-	s.functionRepo.Save(function)
+	if err := s.functionRepo.Save(function); err != nil {
+		return "", err
+	}
 
-	return domain.NewFunctionID("uuid")
+	return function.FunctionID, nil
 }

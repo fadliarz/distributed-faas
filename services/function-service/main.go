@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/fadliarz/services/function-service/application"
+	"github.com/fadliarz/distributed-faas/services/function-service/application"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

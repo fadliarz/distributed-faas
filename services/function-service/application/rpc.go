@@ -3,9 +3,9 @@ package application
 import (
 	"context"
 
-	"github.com/fadliarz/services/function-service/domain/application-service/features/command"
-	"github.com/fadliarz/services/function-service/domain/application-service/features/handler"
-	function_service_v1 "github.com/fadliarz/services/function-service/gen/go/function-service/v1"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/application-service/features/command"
+	"github.com/fadliarz/distributed-faas/services/function-service/domain/application-service/features/handler"
+	function_service_v1 "github.com/fadliarz/distributed-faas/services/function-service/gen/go/function-service/v1"
 	"google.golang.org/grpc"
 )
 
