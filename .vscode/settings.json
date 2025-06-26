@@ -2,5 +2,15 @@
   "protoc": {},
   "editor.formatOnSave": true,
   "editor.tabSize": 4,
-  "json.schemas": []
+  "json.schemas": [],
+  "go.goroot": "/usr/local/go",
+  "go.toolsEnvVars": {
+    "PATH": "${env:PATH}:/usr/local/go/bin"
+  },
+  "[go]": {
+        "editor.formatOnSave": true,
+        // Choose the tool here. "gofmt" is default.
+        // "goimports" is a popular alternative that also cleans up imports.
+        "editor.defaultFormatter": "golang.go"
+  }
 }
