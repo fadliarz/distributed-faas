@@ -1,7 +1,11 @@
 package ports
 
-import "github.com/fadliarz/services/invocation-service/domain/domain-core"
+import (
+	"context"
+
+	"github.com/fadliarz/services/invocation-service/domain/domain-core"
+)
 
 type InvocationRepository interface {
-	Save(invocation *domain.Invocation) error
+	Save(ctx context.Context, invocation *domain.Invocation) error
 }

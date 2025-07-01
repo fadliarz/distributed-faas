@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/fadliarz/services/invocation-service/domain/domain-core"
 )
 
@@ -10,10 +12,10 @@ func NewInvocationRepository() *InvocationRepository {
 	return &InvocationRepository{}
 }
 
-func (r *InvocationRepository) Save(invocation *domain.Invocation) error {
+func (r *InvocationRepository) Save(ctx context.Context, invocation *domain.Invocation) error {
 	mapper := NewInvocationMapper()
 	entity := mapper.Entity(invocation)
 
 	mongo := NewInvocationMongoRepository()
-	return mongo.Save(entity)
+	return mongo.Save(ctx, entity)
 }

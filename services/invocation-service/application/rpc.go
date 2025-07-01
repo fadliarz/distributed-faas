@@ -43,7 +43,7 @@ func (s *InvocationServer) CreateInvocation(ctx context.Context, req *invocation
 		FunctionID: req.FunctionId,
 	}
 
-	invocationID, err := s.handler.CreateInvocation(cmd)
+	invocationID, err := s.handler.CreateInvocation(context.Background(), cmd)
 	if err != nil {
 		if core.IsErrorType(err, core.ValidationError) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())

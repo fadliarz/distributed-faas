@@ -1,6 +1,8 @@
 package domain
 
-import "github.com/fadliarz/services/invocation-service/domain/domain-core/core"
+import (
+	"fmt"
+)
 
 type InvocationDomainService struct{}
 
@@ -10,13 +12,15 @@ func NewInvocationDomainService() *InvocationDomainService {
 
 func (s *InvocationDomainService) ValidateAndInitiateInvocation(invocation *Invocation) error {
 	if invocation.FunctionID == "" {
-		return core.NewValidationError("function ID is required", nil)
+		return fmt.Errorf("function ID cannot be empty")
 	}
-	
+
 	invocationID, err := GenerateInvocationID()
 	if err != nil {
-		return core.NewInternalError("failed to generate invocation ID", err)
+		return fmt.Errorf("failed to generate invocation ID: %w", err)
 	}
+
 	invocation.InvocationID = invocationID
+
 	return nil
 }
