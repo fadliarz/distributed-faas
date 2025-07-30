@@ -9,73 +9,65 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	confluentkafka "github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde"
-	"github.com/confluentinc/confluent-kafka-go/v2/schemaregistry/serde/protobuf"
-	"google.golang.org/protobuf/proto"
+
+	"github.com/rs/zerolog/log"
 )
 
-type MessageProcessor[M any, P proto.Message] interface {
-	ProcessMesssage(msg M) error
+type MessageWithOffset[M any] struct {
+	Message      M
+	KafkaMessage *kafka.Message
 }
 
-type DataMapper[M any, P proto.Message] interface {
-	Message(protoMsg P) M
+type ConfluentKafkaConsumer[M any] struct {
+	ctx    context.Context
+	config *ConsumerConfig
+
+	consumer     *confluentkafka.Consumer
+	deserializer MessageDeserializer[M]
+
+	processor      MessageProcessor[M]
+	processingWg   sync.WaitGroup
+	messageChannel chan MessageWithOffset[M]
+
+	commitTicker *time.Ticker
 }
 
-type ConfluentKafkaConsumer[M any, P proto.Message] struct {
-	consumer             *confluentkafka.Consumer
-	protobufDeserializer *protobuf.Deserializer
-	topicName            string
-	numProcessingWorkers int
-	processingWg         sync.WaitGroup
-	messageChannel       chan M
-	consumerContext      context.Context
-	cancelConsumer       context.CancelFunc
-	stopProcessing       chan struct{}
-	protoMessageFactory  func() P
-	dataMapper           DataMapper[M, P]
-	messageProcessor     MessageProcessor[M, P]
-}
-
-func NewConfluentKafkaConsumer[M any, P proto.Message](cfg *confluentkafka.ConfigMap, srClient schemaregistry.Client, topicName string, numProcessingWorkers int, protoMessageFactory func() P, dataMapper DataMapper[M, P], messageProcessor MessageProcessor[M, P]) (*ConfluentKafkaConsumer[M, P], error) {
-	consumer, err := confluentkafka.NewConsumer(cfg)
+func NewConfluentKafkaConsumer[M any](ctx context.Context, config *ConsumerConfig, deserializer MessageDeserializer[M], processor MessageProcessor[M]) (*ConfluentKafkaConsumer[M], error) {
+	consumer, err := confluentkafka.NewConsumer(&kafka.ConfigMap{
+		"bootstrap.servers":  config.Basic.BootstrapServers,
+		"group.id":           config.Basic.GroupID,
+		"auto.offset.reset":  "earliest",
+		"enable.auto.commit": false,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	consumer.SubscribeTopics([]string{topicName}, nil)
-	if err != nil {
+	if err := consumer.SubscribeTopics([]string{config.Basic.Topic}, nil); err != nil {
 		consumer.Close()
-		return nil, fmt.Errorf("Failed subscribing to kafka topic (%s): %v", topicName, err)
+		return nil, fmt.Errorf("Failed subscribing to kafka topic (%s): %v", config.Basic.Topic, err)
 	}
 
-	protobufDeserializer, err := protobuf.NewDeserializer(srClient, serde.ValueSerde, protobuf.NewDeserializerConfig())
-	if err != nil {
-		consumer.Close()
-		return nil, fmt.Errorf("Failed registering schema register: %v", err)
+	service := &ConfluentKafkaConsumer[M]{
+		ctx:            ctx,
+		config:         config,
+		consumer:       consumer,
+		deserializer:   deserializer,
+		processor:      processor,
+		processingWg:   sync.WaitGroup{},
+		messageChannel: make(chan MessageWithOffset[M], config.Processing.NumWorkers*2), // Buffered channel to hold messages for processing
+		commitTicker:   time.NewTicker(5 * time.Second),
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	service := &ConfluentKafkaConsumer[M, P]{
-		consumer:             consumer,
-		protobufDeserializer: protobufDeserializer,
-		topicName:            topicName,
-		numProcessingWorkers: numProcessingWorkers,
-		consumerContext:      ctx,
-		cancelConsumer:       cancel,
-		stopProcessing:       make(chan struct{}),
-		protoMessageFactory:  protoMessageFactory,
-		dataMapper:           dataMapper,
-		messageProcessor:     messageProcessor,
-	}
+	go service.commitManager()
 
 	return service, nil
 }
 
-func (c *ConfluentKafkaConsumer[M, P]) Consume(ctx context.Context) {
+func (c *ConfluentKafkaConsumer[M]) PollAndProcessMessages() {
+	log.Info().Msgf("Starting Kafka consumer for topic %s with group ID %s", c.config.Basic.Topic, c.config.Basic.GroupID)
 
 	c.startProcessingWorkers()
 
@@ -86,71 +78,105 @@ func (c *ConfluentKafkaConsumer[M, P]) Consume(ctx context.Context) {
 		select {
 		case <-sigchan:
 			return
-		case <-c.consumerContext.Done():
-			return
-		case <-ctx.Done():
+		case <-c.ctx.Done():
 			return
 		default:
-			event := c.consumer.Poll(100)
-			if event == nil {
-				return
+			msg, err := c.consumer.ReadMessage(c.config.Basic.PollTimeout)
+			if err != nil {
+				if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.IsTimeout() {
+					log.Debug().Msgf("No messages received within timeout period (%s)", c.config.Basic.PollTimeout)
+				} else {
+					log.Warn().Msgf("Error reading message: %v", err)
+				}
+				continue
 			}
 
-			switch assertedEvent := event.(type) {
-			case *confluentkafka.Message:
-				protoMsg := c.protoMessageFactory()
-				c.protobufDeserializer.DeserializeInto(*assertedEvent.TopicPartition.Topic, assertedEvent.Value, protoMsg)
+			log.Debug().Msgf("Received message: %s", msg.Value)
 
-				select {
-				case c.messageChannel <- c.dataMapper.Message(protoMsg):
-				case <-c.consumerContext.Done():
-					return
-				case <-time.After(5 * time.Second):
-					// ToDo: handle timeout (e.g., log it or retry)
-				}
-			case confluentkafka.Error:
-				if assertedEvent.IsFatal() {
-					c.cancelConsumer()
-					return
-				} else {
-					// ToDo: handle non-fatal errors (e.g., log them)
-				}
-			default:
-				// ToDo: handle other event types if necessary
+			if deserializedMsg, err := c.deserializer.Deserialize(msg.Value); err == nil {
+				c.messageChannel <- MessageWithOffset[M]{Message: deserializedMsg, KafkaMessage: msg}
+			} else {
+				log.Warn().Msgf("Failed to deserialize message: %v", err)
 			}
 		}
 	}
 }
 
-func (c *ConfluentKafkaConsumer[M, P]) startProcessingWorkers() {
-	for i := 0; i < c.numProcessingWorkers; i++ {
+func (c *ConfluentKafkaConsumer[M]) startProcessingWorkers() {
+	for i := 0; i < c.config.Processing.NumWorkers; i++ {
 		c.processingWg.Add(1)
 		go func(workerID int) {
 			defer c.processingWg.Done()
 			for {
 				select {
-				case msg, ok := <-c.messageChannel:
+				case <-c.ctx.Done():
+					return
+				case messageWithOffset, ok := <-c.messageChannel:
 					if !ok {
 						return
 					}
 
-					err := c.messageProcessor.ProcessMesssage(msg)
+					err := c.processor.Process(c.ctx, messageWithOffset.Message)
 					if err != nil {
+						log.Error().Msgf("Error processing message in worker %d: %v", workerID, err)
 						// ToDo: handle processing error (e.g., dlq, log it, or retry)
 					} else {
-						// ToDo: handle successful processing (e.g., ack the message)
-						/*
-							ToDo:
-							1. If using manual commits, commit the offset
-							for this message or coordinate with a commit manager.
-						*/
+						log.Info().Msgf("Worker %d successfully processed message: %v", workerID, messageWithOffset.Message)
+
+						for i := 0; i < 5; i++ {
+							_, err = c.consumer.StoreMessage(messageWithOffset.KafkaMessage)
+
+							if err == nil {
+								return
+							}
+
+							log.Warn().Msgf("Failed to store message offset after processing: %v, retrying (%d/5)", err, i+1)
+
+							time.Sleep(2 * time.Second)
+						}
+
+						log.Fatal().Err(fmt.Errorf("Failed to store message offset after processing: %v", err))
 					}
-				case <-c.consumerContext.Done():
-					return
-				case <-c.stopProcessing:
-					return
 				}
 			}
 		}(i)
 	}
+}
+
+func (c *ConfluentKafkaConsumer[M]) commitManager() {
+	for {
+		select {
+		case <-c.ctx.Done():
+			c.commitOffsets()
+			return
+		case <-c.commitTicker.C:
+			c.commitOffsets()
+		}
+	}
+}
+
+func (c *ConfluentKafkaConsumer[M]) commitOffsets() {
+	var err error
+
+	for i := 0; i < 10; i++ {
+		_, err = c.consumer.Commit()
+
+		if err == nil {
+			log.Debug().Msg("Offsets committed successfully")
+
+			return
+		}
+
+		if err.(confluentkafka.Error).Code() == confluentkafka.ErrNoOffset {
+			log.Debug().Msg("No offsets to commit, skipping")
+
+			return
+		}
+
+		log.Warn().Msgf("Failed to commit offsets: %v, retrying (%d/10)", err, i+1)
+
+		time.Sleep(2 * time.Second)
+	}
+
+	log.Fatal().Err(fmt.Errorf("Failed to commit offsets after multiple attempts: %v", err))
 }
