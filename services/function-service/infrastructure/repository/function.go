@@ -2,21 +2,20 @@ package repository
 
 import (
 	"github.com/fadliarz/distributed-faas/services/function-service/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type FunctionRepositoryImpl struct {
-	repo   *FunctionMongoRepository
-	mapper *FunctionMapper
+// Entity
+
+type FunctionEntity struct {
+	FunctionID    primitive.ObjectID `bson:"_id,omitempty"`
+	UserID        string             `bson:"user_id"`
+	SourceCodeURL string             `bson:"source_code_url"`
 }
 
-func NewFunctionRepository() *FunctionRepositoryImpl {
-	return &FunctionRepositoryImpl{repo: NewFunctionMongoRepository(), mapper: NewFunctionMapper()}
-}
+// Interfaces
 
-func (r *FunctionRepositoryImpl) Save(function *domain.Function) error {
-	functionEntity := r.mapper.Entity(function)
-
-	err := r.repo.Save(functionEntity)
-
-	return err
+type FunctionDataAccessMapper interface {
+	Entity(function *domain.Function) (*FunctionEntity, error)
+	Domain(function *FunctionEntity) *domain.Function
 }
