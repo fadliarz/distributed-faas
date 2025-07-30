@@ -1,6 +1,15 @@
 go 1.24.4
 
 use (
+	./common
 	./infrastructure/cdc
+	./infrastructure/kafka
+	./services/checkpoint-processor
+	./services/dispatcher-service
 	./services/function-service
+	./services/invocation-service
+	./services/machine
+	./services/registrar-service
+	./tests/integration
+	./tests/integration/function-to-execution-e2e
 )
