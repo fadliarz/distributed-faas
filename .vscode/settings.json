@@ -5,12 +5,12 @@
   "json.schemas": [],
   "go.goroot": "/usr/local/go",
   "go.toolsEnvVars": {
-    "PATH": "${env:PATH}:/usr/local/go/bin"
+    "PATH": "${env:PATH}:/usr/local/go/bin",
+    "CGO_ENABLED": 1,
+    "CC": "/usr/bin/gcc"
   },
   "[go]": {
         "editor.formatOnSave": true,
-        // Choose the tool here. "gofmt" is default.
-        // "goimports" is a popular alternative that also cleans up imports.
         "editor.defaultFormatter": "golang.go"
-  }
+  },
 }
