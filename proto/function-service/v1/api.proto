@@ -23,13 +23,13 @@ message CreateFunctionResponse {
 
 // Get
 
-message GetFunctionUploadURLRequest {
+message GetFunctionUploadPresignedURLRequest {
   string user_id = 1;
   string function_id = 2;
   string language = 3; // e.g: go, js
 }
 
-message GetFunctionUploadURLResponse {
+message GetFunctionUploadPresignedURLResponse {
   string presigned_url = 1;
   string status = 2;
   string message = 3;
