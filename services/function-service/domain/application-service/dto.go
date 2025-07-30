@@ -5,7 +5,7 @@ type CreateFunctionCommand struct {
 	SourceCodeURL string
 }
 
-type GetUploadPresignedURLCommand struct {
+type GetFunctionUploadPresignedURLQuery struct {
 	UserID     string
 	FunctionID string
 	Language   string

@@ -30,7 +30,11 @@ func (h *CommandHandler) CreateFunction(ctx context.Context, command *CreateFunc
 	return functionID, nil
 }
 
-func (h *CommandHandler) GetFunctionUploadPresignedURL(ctx context.Context) (string, error) {
+func (h *CommandHandler) GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error) {
+	url, err := h.service.GetFunctionUploadPresignedURLQuery(ctx, query)
+	if err != nil {
+		return "", fmt.Errorf("failed to get presigned URL for function upload: %w", err)
+	}
 
-	return "", nil
+	return url, nil
 }

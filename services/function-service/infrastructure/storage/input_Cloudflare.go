@@ -11,14 +11,22 @@ import (
 )
 
 type InputCloudflareStorage struct {
-	client *s3.Client
-
 	config *config.InputCloudflareConfig
+
+	client    *s3.Client
+	presigner *s3.PresignClient
+}
+
+func NewInputCloudflareStorage(config *config.InputCloudflareConfig, client *s3.Client) *InputCloudflareStorage {
+	return &InputCloudflareStorage{
+		config:    config,
+		client:    client,
+		presigner: s3.NewPresignClient(client),
+	}
 }
 
 func (s *InputCloudflareStorage) GetUploadPresignedURL(ctx context.Context, key string, expiration time.Duration) (string, error) {
-	presigner := s3.NewPresignClient(s.client)
-	request, err := presigner.PresignPutObject(context.TODO(), &s3.PutObjectInput{
+	request, err := s.presigner.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.config.BucketName),
 		Key:    aws.String(key),
 	}, func(opts *s3.PresignOptions) {

@@ -60,7 +60,7 @@ func (s *FunctionApplicationServiceImpl) PersistFunction(ctx context.Context, co
 	return functionID, nil
 }
 
-func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx context.Context, query *GetUploadPresignedURLCommand) (string, error) {
+func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error) {
 	function, err := s.repositoryManager.Function.FindByUserIDAndFunctionID(ctx, domain.NewUserID(query.UserID), domain.NewFunctionID(query.FunctionID))
 	if function == nil {
 		return "", domain.NewErrUserNotAuthorized(err)

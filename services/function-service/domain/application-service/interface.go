@@ -22,6 +22,7 @@ type FunctionDataMapper interface {
 
 type FunctionApplicationService interface {
 	PersistFunction(ctx context.Context, command *CreateFunctionCommand) (domain.FunctionID, error)
+	GetFunctionUploadPresignedURLQuery(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error)
 }
 
 type InputStorage interface {
