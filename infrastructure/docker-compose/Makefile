@@ -1,8 +1,12 @@
+# Script to manage Docker Compose
+
 start:
 	./start-up.sh
 
 shutdown:
 	./shutdown.sh
+
+# Makefile for Docker Compose Management
 
 up: 
 	@echo "Running docker-compose up..."
@@ -20,6 +24,9 @@ restart-services:
 	COMPOSE_BAKE=true docker-compose -f ./composes/common.yml -f ./composes/services.yml --profile "*" up -d --build
 	@echo "Services restarted."
 
+
+# Up and down related commands
+
 mongo-up:
 	@echo "Running docker-compose up for mongo..."
 	docker-compose -f common.yml -f mongo.yml up -d
@@ -30,16 +37,19 @@ mongo-down:
 	docker-compose -f common.yml -f mongo.yml down
 	@echo "docker-compose down complete."
 
+# Inspect related commands
+
 inspect-mongo: 
 	@echo "Inspecting MongoDB logs..."
 	docker logs -f  docker-compose-distributed-faas-mongo-1 | grep -E -i "warn|warning|error|codeName"
 	@echo "MongoDB logs inspection complete."
 
-
 inspect-connect: 
 	@echo "Inspecting Connect logs..."
 	docker logs -f  docker-compose-distributed-faas-kafka-debezium-connect-1 | grep -E -i "warn|warning|error|codeName"
 	@echo "Connect logs inspection complete."
+
+# Topics related commands
 
 show-topics: 
 	@echo "Listing Kafka topics..."
@@ -47,16 +57,13 @@ show-topics:
 	@echo "Kafka topics listed."
 
 count-messages: 
-	@echo "Counting messages in Kafka topic 'cdc.function-db.function'..."
-	docker exec docker-compose-distributed-faas-kafka-broker-1-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.function-db.function
-	@echo "Message count in Kafka topic 'cdc.function-db.function' complete."
+	@echo "Counting messages in Kafka topics
+	docker exec docker-compose-distributed-faas-kafka-broker-1-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.invocation-db.invocation
+	@echo "Message count in Kafka topics
+
+# Execute related commands
 
 bash-mongo:	
 	@echo "Opening bash shell in MongoDB container..."
-	docker exec -it docker-compose-distributed-faas-mongo-1 /bin/bash
+	docker exec -it docker-compose-distributed-faas-mongo mongosh -u admin -p password --authenticationDatabase admin
 	@echo "Bash shell in MongoDB container opened."
-
-build-nodejs:
-	@echo "Building Node.js Docker image..."
-	docker build -t nodejs-app -f Dockerfile.nodejs .
-	@echo "Node.js Docker image built."
