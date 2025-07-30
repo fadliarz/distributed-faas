@@ -8,6 +8,8 @@ service FunctionService {
   rpc CreateFunction(CreateFunctionRequest) returns (CreateFunctionResponse);
 }
 
+// Create
+
 message CreateFunctionRequest {
   string user_id = 1;
   string source_code_url = 2; 
@@ -19,3 +21,16 @@ message CreateFunctionResponse {
   string message = 3;
 }
 
+// Get
+
+message GetFunctionUploadURLRequest {
+  string user_id = 1;
+  string function_id = 2;
+  string language = 3; // e.g: go, js
+}
+
+message GetFunctionUploadURLResponse {
+  string presigned_url = 1;
+  string status = 2;
+  string message = 3;
+}

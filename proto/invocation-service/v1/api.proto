@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.invocation_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/invocation-service/gen/go/v1;invocation_service_v1";
+  
+service InvocationService {
+  rpc CreateInvocation(CreateInvocationRequest) returns (CreateInvocationResponse);
+}
+
+// Create
+
+message CreateInvocationRequest {
+  string user_id = 1;
+  string function_id = 2; 
+}     
+
+message CreateInvocationResponse {
+  string invocation_id = 1;
+  string status = 2;
+  string message = 3;
+}
+
+// Get
+
+message GetInvocationRequest {
+  string user_id = 1;
+  string invocation_id = 2;
+}
+
+message GetInvocationResponse {
+  string invocation_id = 1;
+  string function_id = 2;
+  string source_code_url = 3;
+  string output_url = 4;
+}

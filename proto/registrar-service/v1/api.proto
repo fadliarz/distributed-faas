@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.registrar_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/registrar-service/v1;registrar_service_v1";
+
+service RegistrarService {
+    rpc RegisterMachine(RegisterMachineRequest) returns (RegisterMachineResponse);
+}
+
+message RegisterMachineRequest {
+    string address = 1;
+}
+
+message RegisterMachineResponse {
+    string machine_id = 1;
+    string status = 2;
+    string message = 3;
+}
+
+message HeartbeatRequest {
+    string machine_id = 1;
+}
+
+message HeartbeatResponse {
+    string status = 1;
+    string message = 2;
+}
+

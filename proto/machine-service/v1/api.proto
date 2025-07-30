@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.machine_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/dispatcher-service/gen/go/machine-service/v1;machine_service_v1";
+
+service MachineService {
+  rpc ExecuteFunction(ExecuteFunctionRequest) returns (ExecuteFunctionResponse);
+}
+
+message ExecuteFunctionRequest {
+  string invocation_id = 1;
+  string function_id = 2;
+  string source_code_url = 3;
+  int64 timestamp = 4;
+  bool is_retry = 5;
+}
+
+message ExecuteFunctionResponse {
+  string status = 1;
+  string message = 2;
+}
+
+message ReexecuteFunctionRequest {
+  string invocation_id = 1;
+  string function_id = 2;
+  string source_code_url = 3;
+  int64 timestamp = 4;
+  bool is_retry = 5;
+}
+
+
+
