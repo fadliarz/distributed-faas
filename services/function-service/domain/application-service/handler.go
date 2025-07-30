@@ -30,8 +30,7 @@ func (h *CommandHandler) CreateFunction(ctx context.Context, command *CreateFunc
 	return functionID, nil
 }
 
-func (h *CommandHandler) GetPresignedURL(ctx context.Context) (string, error) {
-	
+func (h *CommandHandler) GetFunctionUploadPresignedURL(ctx context.Context) (string, error) {
 
 	return "", nil
 }

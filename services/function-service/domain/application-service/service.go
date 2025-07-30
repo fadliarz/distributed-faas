@@ -60,7 +60,7 @@ func (s *FunctionApplicationServiceImpl) PersistFunction(ctx context.Context, co
 	return functionID, nil
 }
 
-func (s *FunctionApplicationServiceImpl) GetUploadPresignedURL(ctx context.Context, query *GetUploadPresignedURLCommand) (string, error) {
+func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx context.Context, query *GetUploadPresignedURLCommand) (string, error) {
 	function, err := s.repositoryManager.Function.FindByUserIDAndFunctionID(ctx, domain.NewUserID(query.UserID), domain.NewFunctionID(query.FunctionID))
 	if function == nil {
 		return "", domain.NewErrUserNotAuthorized(err)
@@ -70,7 +70,7 @@ func (s *FunctionApplicationServiceImpl) GetUploadPresignedURL(ctx context.Conte
 		return "", fmt.Errorf("failed to find function by user ID and function ID: %w", err)
 	}
 
-	url, err := s.storage.GetUploadPresignedURL(ctx, domain.NewUserID(query.UserID), domain.NewFunctionID(query.FunctionID), domain.NewLanguage(query.Language), 1*time.Minute)
+	url, err := s.storage.GetFunctionUploadPresignedURL(ctx, domain.NewUserID(query.UserID), domain.NewFunctionID(query.FunctionID), domain.NewLanguage(query.Language), 1*time.Minute)
 	if err != nil {
 		return "", fmt.Errorf("failed to get presigned URL: %w", err)
 	}

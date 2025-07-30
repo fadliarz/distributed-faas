@@ -25,5 +25,5 @@ type FunctionApplicationService interface {
 }
 
 type InputStorage interface {
-	GetUploadPresignedURL(ctx context.Context, userID domain.UserID, functionID domain.FunctionID, language domain.Language, expiration time.Duration) (string, error)
+	GetFunctionUploadPresignedURL(ctx context.Context, userID domain.UserID, functionID domain.FunctionID, language domain.Language, expiration time.Duration) (string, error)
 }
