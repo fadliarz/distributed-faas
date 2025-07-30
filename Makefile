@@ -12,6 +12,19 @@ gen-dispatcher-service:
 	./proto/machine-service/v1/api.proto
 	@echo "Protobuf compilation complete."
 
+gen-function-service:
+	@echo "Compiling Protobuf definitions for function service..."
+	mkdir -p ./services/function-service/gen/go
+
+	protoc --proto_path=./proto \
+	--go_out=./services/function-service/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./services/function-service/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/function-service/v1/api.proto
+	@echo "Protobuf compilation complete."
+
+
 gen-machine:
 	@echo "Compiling Protobuf definitions for machine..."
 	protoc --proto_path=./proto \
