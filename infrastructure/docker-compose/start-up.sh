@@ -69,36 +69,6 @@ echo "Creating Debezium connector"
 # Wait for MongoDB to be fully up and running
 sleep 10
 
-# function-db connector
-curl --location --request POST 'localhost:8083/connectors' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name": "function-cdc",
-    "config": {
-        "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
-        "mongodb.connection.string": "mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true",
-        "topic.prefix": "cdc",
-        "database.include.list": "function-db",
-        "collection.include.list": "function-db.function",
-
-        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-        "key.converter.schemas.enable": false,
-        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-        "value.converter.schemas.enable": false,
-
-        "transforms": "unwrap",
-        "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState"
-    }
-}'
-
-connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/function-cdc/status')
-
-while [[ ! "$connectorCheckResult" == *'"state":"RUNNING"'* ]]; do
-    >&2 echo "Connector (function-cdc) is not running yet, waiting for it to start, connector check result: $connectorCheckResult"
-    sleep 2
-    connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/function-cdc/status')
-done
-
 # invocation-db connector
 curl --location --request POST 'localhost:8083/connectors' \
 --header 'Content-Type: application/json' \
