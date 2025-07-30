@@ -1,0 +1,16 @@
+services:
+  distributed-faas-mongo:
+    container_name: distributed-faas-mongo
+    image: mongo:7.0
+    hostname: distributed-faas-mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    command: ["/usr/local/bin/init-mongo.sh"]
+    volumes:
+      - "./volumes/mongo/auth.key:/etc/mongo/auth.key"
+      - "./volumes/mongo/init-mongo.sh:/usr/local/bin/init-mongo.sh"
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}

@@ -1,0 +1,17 @@
+services:
+  distributed-faas-zookeeper:
+    container_name: distributed-faas-zookeeper
+    image: confluentinc/cp-zookeeper:${KAFKA_VERSION:-7.2.5}
+    hostname: distributed-faas-zookeeper
+    ports:
+      - "2181:2181"
+    environment: 
+      ZOOKEEPER_CLIENT_PORT: 2181 
+      KAFKA_OPTS: "-Dzookeeper.4lw.commands.whitelist=ruok"
+    volumes:
+      - "./volumes/zookeeper/data:/var/lib/zookeeper/data"
+      - "./volumes/zookeeper/transactions:/var/lib/zookeeper/log"
+    # networks:
+    #   - ${GLOBAL_NETWORK:-distributed-faas}
+    networks:
+      - distributed-faas

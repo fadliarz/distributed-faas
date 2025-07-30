@@ -1,0 +1,120 @@
+services:
+  distributed-faas-function-service:
+    container_name: distributed-faas-function-service
+    build:
+      context: ../../../
+      dockerfile: services/function-service/Dockerfile
+    ports:
+      - 50051:50051
+    environment:
+      PORT: 50051
+      FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      FUNCTION_MONGO_DATABASE: function-db
+      FUNCTION_MONGO_COLLECTION: function
+    profiles:
+      - test-function-cdc
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas} 
+    restart: always
+
+  distributed-faas-function-processor:
+    container_name: distributed-faas-function-processor
+    build:
+      context: ../../../
+      dockerfile: services/function-processor/Dockerfile
+    ports:
+      - 50052:50052
+    environment:
+      PORT: 50052
+      FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      FUNCTION_MONGO_DATABASE: invocation-db
+      FUNCTION_MONGO_COLLECTION: function
+      FUNCTION_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
+      FUNCTION_KAFKA_TOPIC: cdc.function-db.function
+      FUNCTION_KAFKA_GROUP_ID: group-1
+    profiles:
+      - test-function-consumer
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+
+  distributed-faas-invocation-service:
+    container_name: distributed-faas-invocation-service
+    build:
+      context: ../../../
+      dockerfile: services/invocation-service/Dockerfile
+    ports:
+      - 50053:50053
+    environment:
+      PORT: 50053
+      INVOCATION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      INVOCATION_MONGO_DATABASE: invocation-db
+      INVOCATION_MONGO_COLLECTION: invocation
+      FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      FUNCTION_MONGO_DATABASE: invocation-db
+      FUNCTION_MONGO_COLLECTION: function
+    profiles:
+      - test-function-consumer
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas} 
+    restart: always
+
+  distributed-faas-dispatcher-service:
+    container_name: distributed-faas-dispatcher-service
+    build:
+      context: ../../../
+      dockerfile: services/dispatcher-service/Dockerfile
+    ports:
+      - 50054:50054
+    environment:
+      PORT: 50054
+      MACHINE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      MACHINE_MONGO_DATABASE: machine-db
+      MACHINE_MONGO_COLLECTION: machine
+      INVOCATION_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
+      INVOCATION_KAFKA_TOPIC: cdc.invocation-db.invocation
+      INVOCATION_KAFKA_GROUP_ID: group-1
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+
+  distributed-faas-machine:
+    container_name: distributed-faas-machine
+    build:
+      context: ../../../
+      dockerfile: services/machine/Dockerfile
+    ports:
+      - 50055:50055
+    environment:
+      PORT: 50055
+      CHECKPOINT_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CHECKPOINT_MONGO_DATABASE: checkpoint-db
+      CHECKPOINT_MONGO_COLLECTION: checkpoint
+      OUTPUT_CLOUDFLARE_ACCOUNT_ID: 2ded753162d6aa36d6eaea983f56951d
+      OUTPUT_CLOUDFLARE_ACCESS_KEY_ID: c58a8f8a5bb3ba00f5cd62325aac82e1
+      OUTPUT_CLOUDFLARE_SECRET_ACCESS_KEY: 048eac9dc84455b4d405043107be51310739a39890b4c295a6650bf16cab5301
+      OUTPUT_CLOUDFLARE_BUCKET_NAME: distributed-faas
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+  
+  distributed-faas-checkpoint-processor:
+    container_name: distributed-faas-checkpoint-processor
+    build:
+      context: ../../../
+      dockerfile: services/checkpoint-processor/Dockerfile
+    ports:
+      - 50056:50056
+    environment:
+      PORT: 50056
+      INVOCATION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      INVOCATION_MONGO_DATABASE: invocation-db
+      INVOCATION_MONGO_COLLECTION: invocation
+      CHECKPOINT_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
+      CHECKPOINT_KAFKA_TOPIC: cdc.checkpoint-db.checkpoint
+      CHECKPOINT_KAFKA_GROUP_ID: group-1
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always

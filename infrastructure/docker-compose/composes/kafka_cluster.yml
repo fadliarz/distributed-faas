@@ -1,0 +1,79 @@
+services: 
+  distributed-faas-schema-registry:
+    container_name: distributed-faas-schema-registry
+    image: confluentinc/cp-schema-registry:${KAFKA_VERSION-7.2.5}
+    hostname: schema-registry
+    ports:
+      - "8081:8081"
+    depends_on:
+      - distributed-faas-kafka-broker-1
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-broker-1:9092,LISTENER_LOCAL://localhost:19092
+      SCHEMA_REGISTRY_DEBUG: 'true'
+    profiles:
+      - test-function-cdc
+      - test-function-consumer
+    networks:
+      - distributed-faas
+
+  distributed-faas-kafka-broker-1:
+    container_name: distributed-faas-kafka-broker-1
+    image: confluentinc/cp-kafka:${KAFKA_VERSION-7.2.5}
+    hostname: kafka-broker-1
+    ports:
+      - "19092:19092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: distributed-faas-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://distributed-faas-kafka-broker-1:9092,LISTENER_LOCAL://distributed-faas-kafka-broker-1:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,LISTENER_LOCAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - "./volumes/kafka/broker-1:/var/lib/kafka/data"
+    profiles:
+      - test-function-cdc
+      - test-function-consumer
+    networks:
+      - distributed-faas
+
+  distributed-faas-kafka-dlq-1:
+    container_name: distributed-faas-kafka-dlq-1
+    image: confluentinc/cp-kafka:${KAFKA_VERSION-7.2.5}
+    hostname: kafka-dlq-1
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: distributed-faas-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://distributed-faas-kafka-dlq-1:9092,LISTENER_LOCAL://distributed-faas-kafka-dlq-1:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,LISTENER_LOCAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - "./volumes/kafka/dlq-1:/var/lib/kafka/data"
+    profiles:
+      - test-function-consumer
+    networks:
+      - distributed-faas
+
+  distributed-faas-debezium-connect:
+    container_name: distributed-faas-debezium-connect
+    image: debezium/connect:2.3
+    hostname: kafka-debezium-connect
+    ports:
+      - 8083:8083
+    depends_on:
+      - distributed-faas-kafka-broker-1
+      - distributed-faas-schema-registry
+    environment:
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: "connect-config"
+      OFFSET_STORAGE_TOPIC: "connect-offsets"
+      BOOTSTRAP_SERVERS: kafka-broker-1:9092
+    profiles:
+      - test-function-cdc
+    networks:
+      - distributed-faas
