@@ -1,0 +1,15 @@
+with-expecter: true
+dir: "mocks"
+mockname: "Mock{{.InterfaceName}}"
+outpkg: mocks
+packages:
+  github.com/fadliarz/distributed-faas/services/invocation-service/domain/application-service/ports:
+    interfaces:
+      InvocationRepository:
+      FunctionRepository:
+  github.com/fadliarz/distributed-faas/services/invocation-service/domain/application-service/service:
+    interfaces:
+      Mapper:
+  github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core:
+    interfaces:
+      InvocationDomainService:

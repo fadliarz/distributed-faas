@@ -1,32 +1,34 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net"
+	"context"
+	"time"
 
-	"github.com/fadliarz/services/invocation-service/application"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	port := ":50052"
+	config := &Config{
+		Port:            ":50052",
+		ShutdownTimeout: 30 * time.Second,
+	}
 
-	lis, err := net.Listen("tcp", port)
+	loadEnv(config)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dependencies, err := setupDependencies(ctx)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatal().Msgf("failed to setup dependencies: %v", err)
 	}
-	fmt.Printf("gRPC server listening on %s\n", port)
 
-	grpcServer := grpc.NewServer()
-
-	functionServer := application.NewInvocationServer()
-	functionServer.Register(grpcServer)
-
-	reflection.Register(grpcServer)
-
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	server, listener, err := setupGRPCServer(config, dependencies)
+	if err != nil {
+		log.Fatal().Msgf("failed to setup gRPC server: %v", err)
 	}
+
+	shutdown := setupShutdownHandler()
+
+	startServer(server, listener, shutdown, config.ShutdownTimeout)
 }

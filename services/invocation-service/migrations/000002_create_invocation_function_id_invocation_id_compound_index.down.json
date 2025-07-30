@@ -1,0 +1,6 @@
+[
+  {
+    "dropIndexes": "invocatio",
+    "index": "function_id_compound_index"
+  }
+]

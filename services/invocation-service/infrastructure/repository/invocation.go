@@ -1,21 +1,25 @@
 package repository
 
 import (
-	"context"
-
-	"github.com/fadliarz/services/invocation-service/domain/domain-core"
+	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type InvocationRepository struct{}
+// Entity
 
-func NewInvocationRepository() *InvocationRepository {
-	return &InvocationRepository{}
+type InvocationEntity struct {
+	InvocationID  primitive.ObjectID `bson:"_id,omitempty"`
+	FunctionID    string             `bson:"function_id"`
+	UserID        string             `bson:"user_id"`
+	SourceCodeURL string             `bson:"source_code_url"`
+	OutputURL     string             `bson:"output_url"`
+	Timestamp     int64              `bson:"timestamp"`
+	IsRetry       bool               `bson:"is_retry"`
 }
 
-func (r *InvocationRepository) Save(ctx context.Context, invocation *domain.Invocation) error {
-	mapper := NewInvocationMapper()
-	entity := mapper.Entity(invocation)
+// Mapper
 
-	mongo := NewInvocationMongoRepository()
-	return mongo.Save(ctx, entity)
+type InvocationDataAccessMapper interface {
+	Entity(invocation *domain.Invocation) (*InvocationEntity, error)
+	Domain(entity *InvocationEntity) *domain.Invocation
 }

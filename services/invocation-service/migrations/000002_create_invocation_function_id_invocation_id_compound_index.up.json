@@ -1,0 +1,12 @@
+[
+  {
+    "createIndexes": "invocation",
+    "indexes": [
+      {
+        "key": { "function_id": 1, "_id": 1 },
+        "name": "function_id_compound_index",
+        "unique": true
+      }
+    ]
+  }
+]

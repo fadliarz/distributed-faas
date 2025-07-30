@@ -1,0 +1,12 @@
+[
+  {
+    "createIndexes": "function",
+    "indexes": [
+      {
+        "key": { "user_id": 1, "_id": 1 },
+        "name": "user_id_compound_index",
+        "unique": true
+      }
+    ]
+  }
+]

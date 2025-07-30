@@ -1,0 +1,6 @@
+[
+  {
+    "dropIndexes": "function",
+    "index": "user_id_compound_index"
+  }
+]
