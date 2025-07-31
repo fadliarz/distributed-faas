@@ -12,6 +12,7 @@ import (
 type FunctionRepository interface {
 	Save(ctx context.Context, function *domain.Function) (domain.FunctionID, error)
 	FindByUserIDAndFunctionID(ctx context.Context, userID domain.UserID, functionID domain.FunctionID) (*domain.Function, error)
+	UpdateSourceCodeURL(ctx context.Context, functionID domain.FunctionID, sourceCodeURL domain.SourceCodeURL) error
 }
 
 // Interfaces
@@ -22,7 +23,8 @@ type FunctionDataMapper interface {
 
 type FunctionApplicationService interface {
 	PersistFunction(ctx context.Context, command *CreateFunctionCommand) (domain.FunctionID, error)
-	GetFunctionUploadPresignedURLQuery(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error)
+	GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error)
+	UpdateFunctionSourceCodeURL(ctx context.Context, command *UpdateFunctionSourceCodeURLCommand) error
 }
 
 type InputStorage interface {

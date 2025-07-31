@@ -77,3 +77,21 @@ func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx conte
 
 	return url, nil
 }
+
+func (s *FunctionApplicationServiceImpl) UpdateFunctionSourceCodeURL(ctx context.Context, command *UpdateFunctionSourceCodeURLCommand) error {
+	function, err := s.repositoryManager.Function.FindByUserIDAndFunctionID(ctx, domain.NewUserID(command.UserID), domain.NewFunctionID(command.FunctionID))
+	if function == nil {
+		return domain.NewErrUserNotAuthorized(err)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to find function by user ID and function ID: %w", err)
+	}
+
+	err = s.repositoryManager.Function.UpdateSourceCodeURL(ctx, domain.NewFunctionID(command.FunctionID), domain.NewSourceCodeURL(command.SourceCodeURL))
+	if err != nil {
+		return fmt.Errorf("failed to update function source code URL: %w", err)
+	}
+
+	return nil
+}

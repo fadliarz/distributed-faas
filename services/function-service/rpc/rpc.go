@@ -67,3 +67,24 @@ func (s *FunctionServer) GetFunctionUploadPresignedURL(ctx context.Context, req 
 		Message:      "Presigned URL retrieved successfully",
 	}, nil
 }
+
+func (s *FunctionServer) UpdateFunctionSourceCodeURL(ctx context.Context, req *function_service_v1.UpdateFunctionSourceCodeURLRequest) (*function_service_v1.UpdateFunctionSourceCodeURLResponse, error) {
+	cmd := &application.UpdateFunctionSourceCodeURLCommand{
+		UserID:        req.UserId,
+		FunctionID:    req.FunctionId,
+		SourceCodeURL: req.SourceCodeUrl,
+	}
+
+	if err := s.handler.UpdateFunctionSourceCodeURL(ctx, cmd); err != nil {
+		if errors.Is(err, domain.ErrUserNotAuthorized) {
+			return nil, status.Errorf(codes.PermissionDenied, "user not authorized: %v", err)
+		}
+
+		return nil, status.Errorf(codes.Internal, "failed to update function source code URL: %v", err)
+	}
+
+	return &function_service_v1.UpdateFunctionSourceCodeURLResponse{
+		Status:  "success",
+		Message: "Function source code URL updated successfully",
+	}, nil
+}

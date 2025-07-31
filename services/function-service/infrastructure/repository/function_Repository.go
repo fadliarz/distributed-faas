@@ -49,3 +49,17 @@ func (r *FunctionRepositoryImpl) FindByUserIDAndFunctionID(ctx context.Context, 
 
 	return r.mapper.Domain(entity), nil
 }
+
+func (r *FunctionRepositoryImpl) UpdateSourceCodeURL(ctx context.Context, functionID domain.FunctionID, sourceCodeURL domain.SourceCodeURL) error {
+	primitiveFunctionID, err := primitive.ObjectIDFromHex(functionID.String())
+	if err != nil {
+		return fmt.Errorf("invalid function ID format: %w", err)
+	}
+
+	err = r.repo.UpdateSourceCodeURL(ctx, primitiveFunctionID, sourceCodeURL.String())
+	if err != nil {
+		return fmt.Errorf("failed to update function source code URL: %w", err)
+	}
+
+	return nil
+}

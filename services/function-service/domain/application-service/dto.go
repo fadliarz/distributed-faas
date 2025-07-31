@@ -10,3 +10,9 @@ type GetFunctionUploadPresignedURLQuery struct {
 	FunctionID string
 	Language   string
 }
+
+type UpdateFunctionSourceCodeURLCommand struct {
+	UserID        string
+	FunctionID    string
+	SourceCodeURL string
+}

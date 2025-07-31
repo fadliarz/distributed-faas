@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -47,4 +49,23 @@ func (r *FunctionMongoRepository) FindByUserIDAndFunctionID(ctx context.Context,
 	}
 
 	return &function, nil
+}
+
+func (r *FunctionMongoRepository) UpdateSourceCodeURL(ctx context.Context, functionID primitive.ObjectID, sourceCodeURL string) error {
+	result, err := r.collection.UpdateByID(
+		ctx,
+		bson.M{"_id": functionID},
+		bson.M{"$set": bson.M{"source_code_url": sourceCodeURL}},
+	)
+
+	if result.MatchedCount == 0 {
+		return domain.NewErrFunctionNotFound(fmt.Errorf("function with ID %s not found", functionID.Hex()))
+	}
+
+	if result.ModifiedCount == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("failed to update function source code URL: %w", err)
+
 }

@@ -31,10 +31,19 @@ func (h *CommandHandler) CreateFunction(ctx context.Context, command *CreateFunc
 }
 
 func (h *CommandHandler) GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error) {
-	url, err := h.service.GetFunctionUploadPresignedURLQuery(ctx, query)
+	url, err := h.service.GetFunctionUploadPresignedURL(ctx, query)
 	if err != nil {
 		return "", fmt.Errorf("failed to get presigned URL for function upload: %w", err)
 	}
 
 	return url, nil
+}
+
+func (h *CommandHandler) UpdateFunctionSourceCodeURL(ctx context.Context, command *UpdateFunctionSourceCodeURLCommand) error {
+	err := h.service.UpdateFunctionSourceCodeURL(ctx, command)
+	if err != nil {
+		return fmt.Errorf("failed to update function source code URL: %w", err)
+	}
+
+	return nil
 }
