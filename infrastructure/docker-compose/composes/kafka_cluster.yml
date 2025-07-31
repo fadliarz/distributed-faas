@@ -61,7 +61,7 @@ services:
 
   distributed-faas-debezium-connect:
     container_name: distributed-faas-debezium-connect
-    image: debezium/connect:2.3
+    image: debezium/connect:2.7.3.Final
     hostname: kafka-debezium-connect
     ports:
       - 8083:8083
@@ -73,6 +73,8 @@ services:
       CONFIG_STORAGE_TOPIC: "connect-config"
       OFFSET_STORAGE_TOPIC: "connect-offsets"
       BOOTSTRAP_SERVERS: kafka-broker-1:9092
+    volumes:
+      - "/mnt/d/volumes/debezium/filter-smt:/kafka/connect/debezium-connector-mongodb/filter-smt"
     profiles:
       - test-function-cdc
     networks:
