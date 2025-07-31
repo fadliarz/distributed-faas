@@ -17,27 +17,6 @@ services:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
 
-  distributed-faas-function-processor:
-    container_name: distributed-faas-function-processor
-    build:
-      context: ../../../
-      dockerfile: services/function-processor/Dockerfile
-    ports:
-      - 50052:50052
-    environment:
-      PORT: 50052
-      FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
-      FUNCTION_MONGO_DATABASE: invocation-db
-      FUNCTION_MONGO_COLLECTION: function
-      FUNCTION_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
-      FUNCTION_KAFKA_TOPIC: cdc.function-db.function
-      FUNCTION_KAFKA_GROUP_ID: group-1
-    profiles:
-      - test-function-consumer
-    networks:
-      - ${GLOBAL_NETWORK:-distributed-faas}
-    restart: always
-
   distributed-faas-invocation-service:
     container_name: distributed-faas-invocation-service
     build:
