@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -79,16 +80,12 @@ func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx conte
 }
 
 func (s *FunctionApplicationServiceImpl) UpdateFunctionSourceCodeURL(ctx context.Context, command *UpdateFunctionSourceCodeURLCommand) error {
-	function, err := s.repositoryManager.Function.FindByUserIDAndFunctionID(ctx, domain.NewUserID(command.UserID), domain.NewFunctionID(command.FunctionID))
-	if function == nil {
-		return domain.NewErrUserNotAuthorized(err)
+	err := s.repositoryManager.Function.UpdateSourceCodeURLByUserIDAndFunctionID(ctx, domain.NewUserID(command.UserID), domain.NewFunctionID(command.FunctionID), domain.NewSourceCodeURL(command.SourceCodeURL))
+
+	if err != nil && errors.Is(err, domain.ErrFunctionNotFound) {
+		return domain.NewErrUserNotAuthorized(fmt.Errorf("function with ID %s not found", command.FunctionID))
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to find function by user ID and function ID: %w", err)
-	}
-
-	err = s.repositoryManager.Function.UpdateSourceCodeURL(ctx, domain.NewFunctionID(command.FunctionID), domain.NewSourceCodeURL(command.SourceCodeURL))
 	if err != nil {
 		return fmt.Errorf("failed to update function source code URL: %w", err)
 	}

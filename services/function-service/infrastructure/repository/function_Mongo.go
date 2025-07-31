@@ -51,10 +51,10 @@ func (r *FunctionMongoRepository) FindByUserIDAndFunctionID(ctx context.Context,
 	return &function, nil
 }
 
-func (r *FunctionMongoRepository) UpdateSourceCodeURL(ctx context.Context, functionID primitive.ObjectID, sourceCodeURL string) error {
+func (r *FunctionMongoRepository) UpdateSourceCodeURLByUserIDAndFunctionID(ctx context.Context, userID string, functionID primitive.ObjectID, sourceCodeURL string) error {
 	result, err := r.collection.UpdateByID(
 		ctx,
-		bson.M{"_id": functionID},
+		bson.M{"_id": functionID, "user_id": userID},
 		bson.M{"$set": bson.M{"source_code_url": sourceCodeURL}},
 	)
 

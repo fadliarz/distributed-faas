@@ -12,7 +12,7 @@ import (
 type FunctionRepository interface {
 	Save(ctx context.Context, function *domain.Function) (domain.FunctionID, error)
 	FindByUserIDAndFunctionID(ctx context.Context, userID domain.UserID, functionID domain.FunctionID) (*domain.Function, error)
-	UpdateSourceCodeURL(ctx context.Context, functionID domain.FunctionID, sourceCodeURL domain.SourceCodeURL) error
+	UpdateSourceCodeURLByUserIDAndFunctionID(ctx context.Context, userID domain.UserID, functionID domain.FunctionID, sourceCodeURL domain.SourceCodeURL) error
 }
 
 // Interfaces
