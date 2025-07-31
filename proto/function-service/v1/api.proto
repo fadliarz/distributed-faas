@@ -34,3 +34,16 @@ message GetFunctionUploadPresignedURLResponse {
   string status = 2;
   string message = 3;
 }
+
+// Update
+
+message UpdateFunctionSourceCodeURLRequest {
+  string user_id = 1;
+  string function_id = 2;
+  string source_code_url = 3;
+}
+
+message UpdateFunctionSourceCodeURLResponse {
+  string status = 1;
+  string message = 2;
+}
