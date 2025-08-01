@@ -16,13 +16,13 @@ func NewCommandHandler(service *InvocationApplicationService) *CommandHandler {
 	}
 }
 
-func (h *CommandHandler) CreateInvocation(ctx context.Context, cmd *CreateInvocationCommand) (domain.InvocationID, error) {
-	invocationID, err := h.service.PersistInvocation(ctx, cmd)
+func (h *CommandHandler) CreateInvocation(ctx context.Context, cmd *CreateInvocationCommand) (*domain.Invocation, error) {
+	invocation, err := h.service.PersistInvocation(ctx, cmd)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return invocationID, nil
+	return invocation, nil
 }
 
 func (h *CommandHandler) GetInvocation(ctx context.Context, query *GetInvocationQuery) (*domain.Invocation, error) {
@@ -33,4 +33,3 @@ func (h *CommandHandler) GetInvocation(ctx context.Context, query *GetInvocation
 
 	return invocation, nil
 }
-

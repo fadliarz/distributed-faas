@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/application-service"
 	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core"
@@ -11,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/internal/status"
+	"google.golang.org/grpc/status"
 )
 
 type InvocationServer struct {
@@ -38,17 +37,21 @@ func (s *InvocationServer) CreateInvocation(ctx context.Context, req *invocation
 
 	log.Info().Msgf("Creating invocation for user %s and function %s", req.UserId, req.FunctionId)
 
-	invocationID, err := s.handler.CreateInvocation(ctx, cmd)
+	invocation, err := s.handler.CreateInvocation(ctx, cmd)
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to create invocation")
 
-		return nil, fmt.Errorf("Failed to create invocation")
+		return nil, status.Errorf(codes.Internal, "Failed to create invocation: %v", err)
 	}
 
 	return &invocation_service_v1.CreateInvocationResponse{
-		InvocationId: invocationID.String(),
-		Status:       "success",
-		Message:      "Invocation created successfully",
+		InvocationId:  invocation.InvocationID.String(),
+		FunctionId:    invocation.FunctionID.String(),
+		UserId:        invocation.UserID.String(),
+		SourceCodeUrl: invocation.SourceCodeURL.String(),
+		OutputUrl:     invocation.OutputURL.String(),
+		Status:        "success",
+		Message:       "Invocation created successfully",
 	}, nil
 }
 

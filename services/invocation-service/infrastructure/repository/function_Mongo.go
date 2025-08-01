@@ -6,6 +6,7 @@ import (
 
 	"github.com/fadliarz/distributed-faas/common"
 	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -30,13 +31,13 @@ func (r *FunctionMongoRepository) Save(ctx context.Context, function *FunctionEn
 }
 
 func (r *FunctionMongoRepository) FindByUserIDAndFunctionID(ctx context.Context, userID string, functionID primitive.ObjectID) (*FunctionEntity, error) {
-	filter := map[string]interface{}{
+	filter := bson.M{
 		"_id":     functionID,
 		"user_id": userID,
 	}
 
 	var function FunctionEntity
-	err := r.collection.FindOne(context.Background(), filter).Decode(&function)
+	err := r.collection.FindOne(ctx, filter).Decode(&function)
 
 	if err != nil && err == mongo.ErrNoDocuments {
 		return nil, domain.NewErrFunctionNotFound(err)
