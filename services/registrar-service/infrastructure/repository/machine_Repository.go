@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/application-service/ports"
+	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/application-service"
 	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/domain-core"
 )
 
@@ -13,7 +13,7 @@ type MachineRepositoryImpl struct {
 	repo   *MachineMongoRepository
 }
 
-func NewMachineRepository(mapper MachineMapper, repo *MachineMongoRepository) ports.MachineRepository {
+func NewMachineRepository(mapper MachineMapper, repo *MachineMongoRepository) application.MachineRepository {
 	return &MachineRepositoryImpl{
 		mapper: mapper,
 		repo:   repo,
@@ -21,14 +21,17 @@ func NewMachineRepository(mapper MachineMapper, repo *MachineMongoRepository) po
 }
 
 func (r *MachineRepositoryImpl) Save(ctx context.Context, machine *domain.Machine) (domain.MachineID, error) {
-	entity := r.mapper.Entity(machine)
+	entity, err := r.mapper.Entity(machine)
+	if err != nil {
+		return "", fmt.Errorf("failed to map machine to entity: %w", err)
+	}
 
 	machineID, err := r.repo.Save(ctx, entity)
 	if err != nil {
 		return "", fmt.Errorf("failed to save machine: %w", err)
 	}
 
-	return domain.NewLooseMachineID(machineID), nil
+	return domain.NewMachineID(machineID), nil
 }
 
 func (r *MachineRepositoryImpl) UpdateStatus(ctx context.Context, machineID domain.MachineID, address domain.Address, status domain.Status) error {

@@ -16,6 +16,6 @@ type MachineEntity struct {
 // Mapper
 
 type MachineMapper interface {
-	Entity(machine *domain.Machine) *MachineEntity
+	Entity(machine *domain.Machine) (*MachineEntity, error)
 	Domain(entity *MachineEntity) *domain.Machine
 }

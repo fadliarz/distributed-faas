@@ -9,13 +9,16 @@ func NewRegistrarDomainService() RegistrarDomainService {
 }
 
 func (s *RegistrarDomainServiceImpl) ValidateAndInitiateMachine(machine *Machine) error {
-	// Validate the machine
 	if machine.MachineID.String() != "" {
 		return fmt.Errorf("machine ID is already initialized")
 	}
 
 	if machine.Address.String() == "" {
 		return fmt.Errorf("machine address cannot be empty")
+	}
+
+	if machine.Status != 0 {
+		return fmt.Errorf("machine status is already set to %s", machine.Status.String())
 	}
 
 	// Initiate the machine

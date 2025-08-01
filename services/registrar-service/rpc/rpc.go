@@ -3,18 +3,21 @@ package rpc
 import (
 	"context"
 
-	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/application-service/features/command"
-	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/application-service/features/handler"
+	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/application-service"
 	registrar_service_v1 "github.com/fadliarz/distributed-faas/services/registrar-service/gen/go/registrar-service/v1"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RegistrarServer struct {
 	registrar_service_v1.UnimplementedRegistrarServiceServer
-	handler *handler.CommandHandler
+
+	handler *application.CommandHandler
 }
 
-func NewRegistrarServer(handler *handler.CommandHandler) *RegistrarServer {
+func NewRegistrarServer(handler *application.CommandHandler) *RegistrarServer {
 	return &RegistrarServer{
 		handler: handler,
 	}
@@ -24,20 +27,21 @@ func (s *RegistrarServer) Register(server *grpc.Server) {
 	registrar_service_v1.RegisterRegistrarServiceServer(server, s)
 }
 
-func (s *RegistrarServer) RegisterMachine(ctx context.Context,
-	req *registrar_service_v1.RegisterMachineRequest,
-) (*registrar_service_v1.RegisterMachineResponse, error) {
-	cmd := &command.CreateMachineCommand{
+func (s *RegistrarServer) RegisterMachine(ctx context.Context, req *registrar_service_v1.RegisterMachineRequest) (*registrar_service_v1.RegisterMachineResponse, error) {
+	cmd := &application.CreateMachineCommand{
 		Address: req.Address,
 	}
 
-	machineID, err := s.handler.CreateMachine(ctx, cmd)
+	machine, err := s.handler.CreateMachine(ctx, cmd)
 	if err != nil {
-		return nil, err
+		log.Warn().Err(err).Msg("failed to create machine")
+
+		return nil, status.Errorf(codes.Internal, "failed to register machine")
 	}
 
 	return &registrar_service_v1.RegisterMachineResponse{
-		MachineId: machineID.String(),
+		MachineId: machine.MachineID.String(),
+		Address:   machine.Address.String(),
 		Status:    "success",
 		Message:   "Machine registered successfully",
 	}, nil
