@@ -46,7 +46,7 @@ services:
       MACHINE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       MACHINE_MONGO_DATABASE: machine-db
       MACHINE_MONGO_COLLECTION: machine
-      INVOCATION_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
+      INVOCATION_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
       INVOCATION_KAFKA_TOPIC: cdc.invocation-db.invocation
       INVOCATION_KAFKA_GROUP_ID: group-1
     networks:
@@ -87,9 +87,25 @@ services:
       INVOCATION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       INVOCATION_MONGO_DATABASE: invocation-db
       INVOCATION_MONGO_COLLECTION: invocation
-      CHECKPOINT_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:19092
+      CHECKPOINT_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
       CHECKPOINT_KAFKA_TOPIC: cdc.checkpoint-db.checkpoint
       CHECKPOINT_KAFKA_GROUP_ID: group-1
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+
+  distributed-faas-registrar-service:
+    container_name: distributed-faas-registrar-service
+    build:
+      context: ../../../
+      dockerfile: services/registrar-service/Dockerfile
+    ports:
+      - 50057:50057
+    environment:
+      PORT: 50057
+      MACHINE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      MACHINE_MONGO_DATABASE: machine-db
+      MACHINE_MONGO_COLLECTION: machine
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
