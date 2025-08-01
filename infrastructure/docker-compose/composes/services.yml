@@ -11,8 +11,6 @@ services:
       FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       FUNCTION_MONGO_DATABASE: function-db
       FUNCTION_MONGO_COLLECTION: function
-    profiles:
-      - test-function-cdc
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
@@ -32,8 +30,6 @@ services:
       FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       FUNCTION_MONGO_DATABASE: invocation-db
       FUNCTION_MONGO_COLLECTION: function
-    profiles:
-      - test-function-consumer
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always

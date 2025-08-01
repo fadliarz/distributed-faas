@@ -11,7 +11,5 @@ services:
     volumes:
       - "./volumes/zookeeper/data:/var/lib/zookeeper/data"
       - "./volumes/zookeeper/transactions:/var/lib/zookeeper/log"
-    # networks:
-    #   - ${GLOBAL_NETWORK:-distributed-faas}
     networks:
-      - distributed-faas
+      - ${GLOBAL_NETWORK:-distributed-faas}

@@ -12,11 +12,8 @@ services:
       SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-broker-1:9092,LISTENER_LOCAL://localhost:19092
       SCHEMA_REGISTRY_DEBUG: 'true'
-    profiles:
-      - test-function-cdc
-      - test-function-consumer
     networks:
-      - distributed-faas
+      - ${GLOBAL_NETWORK:-distributed-faas}
 
   distributed-faas-kafka-broker-1:
     container_name: distributed-faas-kafka-broker-1
@@ -33,11 +30,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - "./volumes/kafka/broker-1:/var/lib/kafka/data"
-    profiles:
-      - test-function-cdc
-      - test-function-consumer
     networks:
-      - distributed-faas
+      - ${GLOBAL_NETWORK:-distributed-faas}
 
   distributed-faas-kafka-dlq-1:
     container_name: distributed-faas-kafka-dlq-1
@@ -54,10 +48,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - "./volumes/kafka/dlq-1:/var/lib/kafka/data"
-    profiles:
-      - test-function-consumer
     networks:
-      - distributed-faas
+      - ${GLOBAL_NETWORK:-distributed-faas}
 
   distributed-faas-debezium-connect:
     container_name: distributed-faas-debezium-connect
@@ -75,7 +67,5 @@ services:
       BOOTSTRAP_SERVERS: kafka-broker-1:9092
     volumes:
       - "/mnt/d/volumes/debezium/filter-smt:/kafka/connect/debezium-connector-mongodb/filter-smt"
-    profiles:
-      - test-function-cdc
     networks:
-      - distributed-faas
+      - ${GLOBAL_NETWORK:-distributed-faas}
