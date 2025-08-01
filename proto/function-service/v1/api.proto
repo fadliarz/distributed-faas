@@ -6,19 +6,22 @@ option go_package = "github.com/fadliarz/distributed-faas/services/function-serv
   
 service FunctionService {
   rpc CreateFunction(CreateFunctionRequest) returns (CreateFunctionResponse);
+  rpc GetFunctionUploadPresignedURL(GetFunctionUploadPresignedURLRequest) returns (GetFunctionUploadPresignedURLResponse);
+  rpc UpdateFunctionSourceCodeURL(UpdateFunctionSourceCodeURLRequest) returns (UpdateFunctionSourceCodeURLResponse);
 }
 
 // Create
 
 message CreateFunctionRequest {
   string user_id = 1;
-  string source_code_url = 2; 
 }     
 
 message CreateFunctionResponse {
   string function_id = 1;
-  string status = 2;
-  string message = 3;
+  string user_id = 2;
+  string source_code_url  = 3;
+  string status = 4;
+  string message = 5;
 }
 
 // Get

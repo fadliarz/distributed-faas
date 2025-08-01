@@ -17,8 +17,12 @@ message CreateInvocationRequest {
 
 message CreateInvocationResponse {
   string invocation_id = 1;
-  string status = 2;
-  string message = 3;
+  string function_id = 2;
+  string user_id = 3;
+  string source_code_url = 4;
+  string output_url = 5;
+  string status = 6;
+  string message = 7;
 }
 
 // Get
