@@ -12,5 +12,4 @@ use (
 	./services/registrar-service
 	./services/retry-service
 	./tests/integration
-	./tests/integration/function-to-execution-e2e
 )
