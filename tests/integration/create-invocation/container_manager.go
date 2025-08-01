@@ -49,6 +49,8 @@ func NewContainerManager(ctx context.Context, config *TestConfig) *ContainerMana
 		ctx:               ctx,
 		config:            config,
 		ConnectionStrings: &ConnectionStrings{},
+		Composes:          &Composes{},
+		Containers:        &Containers{},
 	}
 }
 
@@ -61,7 +63,7 @@ func (cm *ContainerManager) SetupContainers() error {
 		return fmt.Errorf("failed to start infrastructure containers: %w", err)
 	}
 
-	if err := cm.setupConnectionString(); err != nil {
+	if err := cm.setupConnectionStrings(); err != nil {
 		return fmt.Errorf("failed to setup connection strings: %w", err)
 	}
 
@@ -176,7 +178,7 @@ func (cm *ContainerManager) startContainers() error {
 	return nil
 }
 
-func (cm *ContainerManager) setupConnectionString() error {
+func (cm *ContainerManager) setupConnectionStrings() error {
 	// Mongo
 	host, err := cm.Containers.Mongo.Host(cm.ctx)
 	if err != nil {
@@ -251,15 +253,15 @@ func (cm *ContainerManager) setupInvocationDebeziumConnector() error {
 		}
 	}`,
 		cm.config.DebeziumConfig.InvocationConnectorName,
-		cm.ConnectionStrings.Mongo,
+		cm.config.GetMongoConnectionString(),
 		cm.config.MongoConfig.InvocationDatabase,
-		fmt.Sprintf("%s\\\\.%s", cm.config.MongoConfig.InvocationDatabase, cm.config.MongoConfig.InvocationCollection),
+		fmt.Sprintf("%s.%s", cm.config.MongoConfig.InvocationDatabase, cm.config.MongoConfig.InvocationCollection),
 	)
 
 	endpoint := fmt.Sprintf("%s/connectors", cm.ConnectionStrings.Debezium)
 
 	for attempt := 1; attempt <= cm.config.DebeziumConfig.MaxRetries; attempt++ {
-		log.Info().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.InvocationConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
+		log.Debug().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.InvocationConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
 
 		// Create HTTP request
 		req, err := http.NewRequest("POST", endpoint, strings.NewReader(configJSON))
@@ -280,7 +282,7 @@ func (cm *ContainerManager) setupInvocationDebeziumConnector() error {
 		}
 
 		if err == nil && res.StatusCode >= 200 && res.StatusCode < 300 {
-			log.Info().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.InvocationConnectorName, attempt)
+			log.Debug().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.InvocationConnectorName, attempt)
 
 			res.Body.Close()
 			return cm.waitForInvocationConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.InvocationConnectorName))
@@ -308,7 +310,7 @@ func (cm *ContainerManager) waitForInvocationConnectorReady(endpoint string) err
 	deadline := time.Now().Add(cm.config.DebeziumConfig.ReadyTimeout)
 
 	for time.Now().Before(deadline) {
-		log.Info().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.InvocationConnectorName)
+		log.Debug().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.InvocationConnectorName)
 
 		res, err := http.Get(endpoint)
 
@@ -327,7 +329,7 @@ func (cm *ContainerManager) waitForInvocationConnectorReady(endpoint string) err
 		}
 
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
-			log.Info().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.InvocationConnectorName)
+			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.InvocationConnectorName)
 
 			time.Sleep(5 * time.Second)
 			return nil
@@ -365,7 +367,7 @@ func (cm *ContainerManager) setupCheckpointDebeziumConnector() error {
 		}
 	}`,
 		cm.config.DebeziumConfig.CheckpointConnectorName,
-		cm.ConnectionStrings.Mongo,
+		cm.config.GetMongoConnectionString(),
 		cm.config.MongoConfig.CheckpointDatabase,
 		fmt.Sprintf("%s\\\\.%s", cm.config.MongoConfig.CheckpointDatabase, cm.config.MongoConfig.CheckpointCollection),
 	)
@@ -373,7 +375,7 @@ func (cm *ContainerManager) setupCheckpointDebeziumConnector() error {
 	endpoint := fmt.Sprintf("%s/connectors", cm.ConnectionStrings.Debezium)
 
 	for attempt := 1; attempt <= cm.config.DebeziumConfig.MaxRetries; attempt++ {
-		log.Info().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.CheckpointConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
+		log.Debug().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.CheckpointConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
 
 		// Create HTTP request
 		req, err := http.NewRequest("POST", endpoint, strings.NewReader(configJSON))
@@ -394,10 +396,10 @@ func (cm *ContainerManager) setupCheckpointDebeziumConnector() error {
 		}
 
 		if err == nil && res.StatusCode >= 200 && res.StatusCode < 300 {
-			log.Info().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.CheckpointConnectorName, attempt)
+			log.Debug().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.CheckpointConnectorName, attempt)
 
 			res.Body.Close()
-			return cm.waitForInvocationConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.CheckpointConnectorName))
+			return cm.waitForCheckpointConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.CheckpointConnectorName))
 		}
 
 		if res != nil {
@@ -422,7 +424,7 @@ func (cm *ContainerManager) waitForCheckpointConnectorReady(endpoint string) err
 	deadline := time.Now().Add(cm.config.DebeziumConfig.ReadyTimeout)
 
 	for time.Now().Before(deadline) {
-		log.Info().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.CheckpointConnectorName)
+		log.Debug().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.CheckpointConnectorName)
 
 		res, err := http.Get(endpoint)
 
@@ -441,7 +443,7 @@ func (cm *ContainerManager) waitForCheckpointConnectorReady(endpoint string) err
 		}
 
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
-			log.Info().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointConnectorName)
+			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointConnectorName)
 
 			time.Sleep(5 * time.Second)
 			return nil
@@ -483,7 +485,7 @@ func (cm *ContainerManager) setupCheckpointToInvocationDebeziumConnector() error
 			}
 	}`,
 		cm.config.DebeziumConfig.CheckpointToInvocationConnectorName,
-		cm.ConnectionStrings.Mongo,
+		cm.config.GetMongoConnectionString(),
 		cm.config.MongoConfig.CheckpointDatabase,
 		fmt.Sprintf("%s\\\\.%s", cm.config.MongoConfig.CheckpointDatabase, cm.config.MongoConfig.CheckpointCollection),
 		cm.config.MongoConfig.CheckpointDatabase,
@@ -495,7 +497,7 @@ func (cm *ContainerManager) setupCheckpointToInvocationDebeziumConnector() error
 	endpoint := fmt.Sprintf("%s/connectors", cm.ConnectionStrings.Debezium)
 
 	for attempt := 1; attempt <= cm.config.DebeziumConfig.MaxRetries; attempt++ {
-		log.Info().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
+		log.Debug().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
 
 		// Create HTTP request
 		req, err := http.NewRequest("POST", endpoint, strings.NewReader(configJSON))
@@ -516,10 +518,10 @@ func (cm *ContainerManager) setupCheckpointToInvocationDebeziumConnector() error
 		}
 
 		if err == nil && res.StatusCode >= 200 && res.StatusCode < 300 {
-			log.Info().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt)
+			log.Debug().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt)
 
 			res.Body.Close()
-			return cm.waitForInvocationConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.CheckpointToInvocationConnectorName))
+			return cm.waitForCheckpointToInvocationConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.CheckpointToInvocationConnectorName))
 		}
 
 		if res != nil {
@@ -544,7 +546,7 @@ func (cm *ContainerManager) waitForCheckpointToInvocationConnectorReady(endpoint
 	deadline := time.Now().Add(cm.config.DebeziumConfig.ReadyTimeout)
 
 	for time.Now().Before(deadline) {
-		log.Info().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
+		log.Debug().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
 
 		res, err := http.Get(endpoint)
 
@@ -563,7 +565,7 @@ func (cm *ContainerManager) waitForCheckpointToInvocationConnectorReady(endpoint
 		}
 
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
-			log.Info().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
+			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
 
 			time.Sleep(5 * time.Second)
 			return nil
@@ -576,7 +578,7 @@ func (cm *ContainerManager) waitForCheckpointToInvocationConnectorReady(endpoint
 }
 
 func (cm *ContainerManager) Down() error {
-	log.Info().Msg("Tearing down container manager")
+	log.Debug().Msg("Tearing down container manager")
 
 	g := new(errgroup.Group)
 

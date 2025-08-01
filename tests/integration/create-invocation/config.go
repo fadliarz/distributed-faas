@@ -14,6 +14,8 @@ type TestConfig struct {
 	MongoConfig    *MongoConfig
 	KafkaConfig    *KafkaConfig
 	DebeziumConfig *DebeziumConfig
+
+	GrpcEndpoints *GrpcEndpoints
 }
 
 type ComposePaths struct {
@@ -62,20 +64,24 @@ type KafkaConfig struct {
 }
 
 type DebeziumConfig struct {
-	Connector     string
+	InvocationConnectorName             string
+	CheckpointConnectorName             string
+	CheckpointToInvocationConnectorName string
+
 	MaxRetries    int
 	RetryInterval time.Duration
 	ReadyTimeout  time.Duration
 	ReadyInterval time.Duration
 }
 
+type GrpcEndpoints struct {
+	FunctionService   string
+	InvocationService string
+}
+
 // Constructor for TestConfig
 func NewDefaultTestConfig() *TestConfig {
 	return &TestConfig{
-		ComposeConfig: &ComposeConfig{
-			ProjectID: uuid.NewString(),
-			Profile:   "test-function-cdc",
-		},
 		ComposePaths: &ComposePaths{
 			Common:    "/home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/common.yml",
 			Mongo:     "/home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/mongo.yml",
@@ -89,13 +95,17 @@ func NewDefaultTestConfig() *TestConfig {
 			Debezium:        "distributed-faas-debezium-connect",
 			FunctionService: "distributed-faas-function-service",
 		},
+		ComposeConfig: &ComposeConfig{
+			ProjectID: uuid.NewString(),
+			Profile:   "test-function-cdc",
+		},
 		MongoConfig: &MongoConfig{
 			// Function MongoDB configuration
 			ReplicaSet: "rs0",
 			Username:   "admin",
 			Password:   "password",
 
-			FunctionDatabase:     "function-db",
+			FunctionDatabase:     "invocation-db",
 			FunctionCollection:   "function",
 			InvocationDatabase:   "invocation-db",
 			InvocationCollection: "invocation",
@@ -112,11 +122,26 @@ func NewDefaultTestConfig() *TestConfig {
 			CheckpointTopic: "cdc.checkpoint-db.checkpoint",
 		},
 		DebeziumConfig: &DebeziumConfig{
-			Connector:     "function-cdc",
+			InvocationConnectorName:             "invocation-cdc",
+			CheckpointConnectorName:             "checkpoint-cdc",
+			CheckpointToInvocationConnectorName: "checkpoint-to-invocation-cdc",
+
 			MaxRetries:    30,              // Number of retries for Debezium connector creation
 			RetryInterval: 3 * time.Second, // Interval between retries
 			ReadyTimeout:  6 * time.Second,
 			ReadyInterval: 2 * time.Second,
 		},
+		GrpcEndpoints: &GrpcEndpoints{
+			FunctionService:   "localhost:50051",
+			InvocationService: "localhost:50053",
+		},
 	}
+}
+
+func (config *TestConfig) GetMongoConnectionString() string {
+	return "mongodb://" + config.MongoConfig.Username + ":" + config.MongoConfig.Password + "@" + config.ContainerNames.Mongo + ":27017/?replicaSet=" + config.MongoConfig.ReplicaSet + "&directConnection=true"
+}
+
+func (config *TestConfig) GetKafkaConnectionString() string {
+	return "localhost:19092"
 }

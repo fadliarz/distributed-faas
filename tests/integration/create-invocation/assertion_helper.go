@@ -2,10 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
+	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/fadliarz/distributed-faas/services/dispatcher-service/domain/application-service"
 	fs_repository "github.com/fadliarz/distributed-faas/services/function-service/infrastructure/repository"
 	is_repository "github.com/fadliarz/distributed-faas/services/invocation-service/infrastructure/repository"
+	invocation_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/invocation-service/v1"
+	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -58,16 +64,35 @@ func (ah *AssertionHelper) AssertInvocationPersistedInMongoDB(ctx context.Contex
 	require.Greater(ah.t, invocation.Timestamp, int64(0), "Timestamp should be greater than 0")
 }
 
-func contains(s, substr string) bool {
-	return len(substr) > 0 && len(s) >= len(substr) &&
-		(s == substr || findSubstring(s, substr))
-}
+func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context, consumer *kafka.Consumer, createInvocationResponse *invocation_service_v1.CreateInvocationResponse) {
+	deadline := time.Now().Add(30 * time.Second)
 
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
+	for time.Now().Before(deadline) {
+		msg, err := consumer.ReadMessage(3 * time.Second)
+		if err != nil {
+			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
+				log.Debug().Msg("No message received from Kafka within the timeout period, retrying...")
+
+				continue
+			}
+
+			require.NoError(ah.t, err, "Failed to read message from Kafka")
+		}
+
+		if msg != nil && len(msg.Value) > 0 {
+			var event application.InvocationCreatedEvent
+			err := json.Unmarshal(msg.Value, &event)
+
+			require.NoError(ah.t, err, "Failed to unmarshal message from Kafka")
+			require.Equal(ah.t, createInvocationResponse.InvocationId, event.InvocationID, "Invocation ID does not match")
+			require.Equal(ah.t, createInvocationResponse.FunctionId, event.FunctionID, "Function ID does not match")
+			require.Equal(ah.t, createInvocationResponse.SourceCodeUrl, event.SourceCodeURL, "Source code URL does not match")
+			require.Less(ah.t, int64(0), event.Timestamp, "Timestamp should be greater than 0")
+			require.False(ah.t, event.IsRetry, "Invocation should not be a retry")
+
+			return
 		}
 	}
-	return false
+
+	require.Fail(ah.t, "No message received from Kafka within the timeout period")
 }
