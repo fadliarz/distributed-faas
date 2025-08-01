@@ -29,6 +29,7 @@ func (m *InvocationDataAccessMapperImpl) Entity(invocation *domain.Invocation) (
 		UserID:        invocation.UserID.String(),
 		SourceCodeURL: invocation.SourceCodeURL.String(),
 		OutputURL:     invocation.OutputURL.String(),
+		Status:        invocation.Status.String(),
 		Timestamp:     invocation.Timestamp.Int64(),
 		IsRetry:       invocation.IsRetry.Bool(),
 	}, nil
@@ -45,6 +46,7 @@ func (m *InvocationDataAccessMapperImpl) Domain(entity *InvocationEntity) *domai
 		UserID:        domain.NewUserID(entity.UserID),
 		SourceCodeURL: domain.NewSourceCodeURL(entity.SourceCodeURL),
 		OutputURL:     domain.NewOutputURL(entity.OutputURL),
+		Status:        domain.NewStatus(entity.Status),
 		Timestamp:     domain.NewTimestamp(entity.Timestamp),
 		IsRetry:       domain.NewIsRetry(entity.IsRetry),
 	}

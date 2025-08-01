@@ -13,6 +13,7 @@ type InvocationEntity struct {
 	UserID        string             `bson:"user_id"`
 	SourceCodeURL string             `bson:"source_code_url"`
 	OutputURL     string             `bson:"output_url"`
+	Status        string             `bson:"status"`
 	Timestamp     int64              `bson:"timestamp"`
 	IsRetry       bool               `bson:"is_retry"`
 }

@@ -6,6 +6,7 @@ type Invocation struct {
 	UserID        UserID
 	SourceCodeURL SourceCodeURL
 	OutputURL     OutputURL
+	Status        Status
 	Timestamp     Timestamp
 	IsRetry       IsRetry
 }

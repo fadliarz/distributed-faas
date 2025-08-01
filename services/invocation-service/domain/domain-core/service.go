@@ -36,8 +36,13 @@ func (s *InvocationDomainServiceImpl) ValidateAndInitiateInvocation(invocation *
 		return fmt.Errorf("output URL must be empty for a new invocation, got: %s", invocation.OutputURL.String())
 	}
 
+	if invocation.Status != 0 {
+		return fmt.Errorf("status must be Unknown for a new invocation, got: %s", invocation.Status.String())
+	}
+
 	invocation.InvocationID = NewInvocationID(invocationID)
 	invocation.SourceCodeURL = function.SourceCodeURL
+	invocation.Status = NewStatus("PENDING")
 	invocation.Timestamp = NewTimestamp(time.Now().Unix())
 	invocation.IsRetry = NewIsRetry(false)
 
