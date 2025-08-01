@@ -59,7 +59,7 @@ func setupDependencies(ctx context.Context) (*Dependencies, error) {
 
 	return &Dependencies{
 		configManager: &ConfigManager{
-			RetryConfig: retryConfig,
+			Retry: retryConfig,
 		},
 		handler: setupRetryHandler(repositoryManager),
 	}, nil
