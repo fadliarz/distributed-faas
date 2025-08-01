@@ -11,9 +11,10 @@ service MachineService {
 message ExecuteFunctionRequest {
   string invocation_id = 1;
   string function_id = 2;
-  string source_code_url = 3;
-  int64 timestamp = 4;
-  bool is_retry = 5;
+  string user_id = 3;
+  string source_code_url = 4;
+  int64 timestamp = 5;
+  bool is_retry = 6;
 }
 
 message ExecuteFunctionResponse {
