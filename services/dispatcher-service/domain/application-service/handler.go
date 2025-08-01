@@ -91,6 +91,7 @@ func (h *InvocationEventHandler) executeInvocation(ctx context.Context, machine 
 	request := &machine_service_v1.ExecuteFunctionRequest{
 		InvocationId:  event.InvocationID,
 		FunctionId:    event.FunctionID,
+		UserId:        event.UserID,
 		SourceCodeUrl: event.SourceCodeURL,
 		Timestamp:     event.Timestamp,
 		IsRetry:       event.IsRetry,
