@@ -24,7 +24,6 @@ restart-services:
 	COMPOSE_BAKE=true docker-compose -f ./composes/common.yml -f ./composes/services.yml --profile "*" up -d --build
 	@echo "Services restarted."
 
-
 # Up and down related commands
 
 mongo-up:
@@ -57,9 +56,10 @@ show-topics:
 	@echo "Kafka topics listed."
 
 count-messages: 
-	@echo "Counting messages in Kafka topics
-	docker exec docker-compose-distributed-faas-kafka-broker-1-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.invocation-db.invocation
-	@echo "Message count in Kafka topics
+	@echo "Counting messages in Kafka topics..."
+	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.invocation-db.invocation
+	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.checkpoint-db.checkpoint
+	@echo "Message count in Kafka topics complete."
 
 # Execute related commands
 
