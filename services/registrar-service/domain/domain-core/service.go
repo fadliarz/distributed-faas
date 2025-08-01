@@ -1,6 +1,8 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type RegistrarDomainServiceImpl struct{}
 
@@ -8,13 +10,9 @@ func NewRegistrarDomainService() RegistrarDomainService {
 	return &RegistrarDomainServiceImpl{}
 }
 
-func (s *RegistrarDomainServiceImpl) ValidateAndInitiateMachine(machine *Machine) error {
+func (s *RegistrarDomainServiceImpl) ValidateAndInitiateMachine(machine *Machine, machineID MachineID) error {
 	if machine.MachineID.String() != "" {
 		return fmt.Errorf("machine ID is already initialized")
-	}
-
-	if machine.Address.String() == "" {
-		return fmt.Errorf("machine address cannot be empty")
 	}
 
 	if machine.Status != 0 {
@@ -22,7 +20,12 @@ func (s *RegistrarDomainServiceImpl) ValidateAndInitiateMachine(machine *Machine
 	}
 
 	// Initiate the machine
+	machine.MachineID = NewMachineID(machineID.String())
 	machine.Status = NewStatusFromInt(int(Available))
+
+	if machine.Address.String() == "" {
+		return fmt.Errorf("machine address cannot be empty")
+	}
 
 	return nil
 }

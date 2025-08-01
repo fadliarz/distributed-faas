@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fadliarz/distributed-faas/services/registrar-service/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RegistrarApplicationService struct {
@@ -25,10 +26,16 @@ func NewRegistrarApplicationService(mapper RegistrarDataMapper, domainService do
 	}
 }
 
+func NewRegistrarApplicationServiceRepositoryManager(machineRepository MachineRepository) *RegistrarApplicationServiceRepositoryManager {
+	return &RegistrarApplicationServiceRepositoryManager{
+		Machine: machineRepository,
+	}
+}
+
 func (s *RegistrarApplicationService) PersistMachine(ctx context.Context, command *CreateMachineCommand) (*domain.Machine, error) {
 	machine := s.mapper.CreateMachineCommandToMachine(command)
 
-	err := s.domainService.ValidateAndInitiateMachine(machine)
+	err := s.domainService.ValidateAndInitiateMachine(machine, domain.NewMachineID(primitive.NewObjectID().Hex()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate and initiate machine: %w", err)
 	}

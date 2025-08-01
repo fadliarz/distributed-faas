@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/golang/protobuf v1.5.4
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.34.0
 	go.mongodb.org/mongo-driver v1.17.4
 	google.golang.org/grpc v1.73.0

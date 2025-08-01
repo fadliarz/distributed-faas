@@ -7,13 +7,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type MachineMapperImpl struct{}
+type MachineDataAccessMapper struct{}
 
-func NewMachineMapper() MachineMapper {
-	return &MachineMapperImpl{}
+func NewMachineDataAccessMapper() MachineMapper {
+	return &MachineDataAccessMapper{}
 }
 
-func (m *MachineMapperImpl) Entity(machine *domain.Machine) (*MachineEntity, error) {
+func (m *MachineDataAccessMapper) Entity(machine *domain.Machine) (*MachineEntity, error) {
 	if machine == nil {
 		return nil, nil
 	}
@@ -30,7 +30,7 @@ func (m *MachineMapperImpl) Entity(machine *domain.Machine) (*MachineEntity, err
 	}, nil
 }
 
-func (m *MachineMapperImpl) Domain(entity *MachineEntity) *domain.Machine {
+func (m *MachineDataAccessMapper) Domain(entity *MachineEntity) *domain.Machine {
 	if entity == nil {
 		return nil
 	}
