@@ -19,13 +19,19 @@ func NewInvocationMongoRepository(collection *mongo.Collection) *InvocationMongo
 	}
 }
 
-func (r *InvocationMongoRepository) UpdateOutputURLIfNotSet(ctx context.Context, invocationID primitive.ObjectID, outputURL string) error {
-	result, err := r.collection.UpdateOne(ctx, bson.M{
+func (r *InvocationMongoRepository) UpdateOutputURLAndStatusToSuccessIfNotSet(ctx context.Context, invocationID primitive.ObjectID, outputURL string) error {
+	filter := bson.M{
 		"_id":        invocationID,
 		"output_url": "",
-	}, bson.M{
-		"$set": bson.M{"output_url": outputURL},
-	})
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"output_url": outputURL,
+			"status":     "SUCCESS",
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return fmt.Errorf("failed to update invocation: %w", err)

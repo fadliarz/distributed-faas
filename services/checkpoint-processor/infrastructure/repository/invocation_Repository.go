@@ -19,13 +19,13 @@ func NewInvocationRepository(repo *InvocationMongoRepository) application.Invoca
 	}
 }
 
-func (r *InvocationRepository) UpdateOutputURLIfNotSet(ctx context.Context, invocationID domain.InvocationID, outputURL string) error {
+func (r *InvocationRepository) UpdateOutputURLAndStatusToSuccessIfNotSet(ctx context.Context, invocationID domain.InvocationID, outputURL string) error {
 	invocationIDPrimitive, err := primitive.ObjectIDFromHex(invocationID.String())
 	if err != nil {
 		return fmt.Errorf("invalid invocation ID: %w", err)
 	}
 
-	err = r.repo.UpdateOutputURLIfNotSet(ctx, invocationIDPrimitive, outputURL)
+	err = r.repo.UpdateOutputURLAndStatusToSuccessIfNotSet(ctx, invocationIDPrimitive, outputURL)
 	if err != nil {
 		return fmt.Errorf("failed to update output URL: %w", err)
 	}

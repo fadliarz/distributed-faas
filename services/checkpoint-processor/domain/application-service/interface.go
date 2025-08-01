@@ -10,7 +10,7 @@ import (
 // Ports
 
 type InvocationRepository interface {
-	UpdateOutputURLIfNotSet(ctx context.Context, invocationID domain.InvocationID, outputURL string) error
+	UpdateOutputURLAndStatusToSuccessIfNotSet(ctx context.Context, invocationID domain.InvocationID, outputURL string) error
 }
 
 type CheckpointConsumer interface {

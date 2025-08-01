@@ -34,7 +34,7 @@ func NewCheckpointEventHandlerRepositoryManager(invocation InvocationRepository)
 // Methods
 
 func (eh *CheckpointEventHandler) HandleCheckpointEvent(ctx context.Context, event *CheckpointEvent) error {
-	err := eh.repositoryManager.Invocation.UpdateOutputURLIfNotSet(ctx, domain.InvocationID(event.CheckpointID), event.OutputURL)
+	err := eh.repositoryManager.Invocation.UpdateOutputURLAndStatusToSuccessIfNotSet(ctx, domain.InvocationID(event.CheckpointID), event.OutputURL)
 	if err != nil {
 		return fmt.Errorf("failed to update output URL: %w", err)
 	}
