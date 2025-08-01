@@ -22,6 +22,7 @@ func (m *CheckpointDataAccessMapperImpl) Entity(checkpoint *domain.Checkpoint) (
 	return &CheckpointEntity{
 		CheckpointID:  checkpointID,
 		FunctionID:    checkpoint.FunctionID.String(),
+		UserID:        checkpoint.UserID.String(),
 		SourceCodeURL: checkpoint.SourceCodeURL.String(),
 		Timestamp:     checkpoint.Timestamp.Int64(),
 		Status:        checkpoint.Status.String(),
@@ -33,6 +34,7 @@ func (m *CheckpointDataAccessMapperImpl) Domain(entity *CheckpointEntity) *domai
 	return &domain.Checkpoint{
 		CheckpointID:  domain.NewCheckpointID(entity.CheckpointID.Hex()),
 		FunctionID:    domain.NewFunctionID(entity.FunctionID),
+		UserID:        domain.NewUserID(entity.UserID),
 		SourceCodeURL: domain.NewSourceCodeURL(entity.SourceCodeURL),
 		Timestamp:     domain.NewTimestamp(entity.Timestamp),
 		Status:        domain.NewStatus(entity.Status),

@@ -9,8 +9,8 @@ import (
 
 type CheckpointEntity struct {
 	CheckpointID  primitive.ObjectID `bson:"_id,omitempty"`
-	InvocationID  string             `bson:"invocation_id"`
 	FunctionID    string             `bson:"function_id"`
+	UserID        string             `bson:"user_id"`
 	SourceCodeURL string             `bson:"source_code_url"`
 	Timestamp     int64              `bson:"timestamp"`
 	Status        string             `bson:"status"`

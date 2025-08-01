@@ -49,3 +49,20 @@ func (r *CheckpointMongoRepository) UpdateCheckpointTimestampIfStatusIsPendingAn
 
 	return nil
 }
+
+func (r *CheckpointMongoRepository) UpdateStatusToSuccess(ctx context.Context, checkpointID primitive.ObjectID, outputURL string) error {
+	update := bson.M{
+		"$set": bson.M{
+			"status":     "SUCCESS",
+			"output_url": outputURL,
+		},
+	}
+
+	_, err := r.collection.UpdateByID(ctx, checkpointID, update)
+
+	if err != nil {
+		return fmt.Errorf("failed to update checkpoint status to SUCCESS: %w", err)
+	}
+
+	return nil
+}

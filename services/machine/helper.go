@@ -109,13 +109,6 @@ func setupCheckpointRepository(ctx context.Context) (application.CheckpointRepos
 }
 
 func setupCommandHandler(ctx context.Context, repositoryManager *RepositoryManager) (*application.CommandHandler, error) {
-	// Application Service
-	applicationService := application.NewMachineApplicationService(
-		application.NewMachineDataMapper(),
-		domain.NewMachineDomainService(),
-		application.NewMachineApplicationServiceRepositoryManager(repositoryManager.Checkpoint),
-	)
-
 	// Config
 	cloudflareConfig, err := config.NewOutputCloudflareConfig()
 	if err != nil {
@@ -128,10 +121,16 @@ func setupCommandHandler(ctx context.Context, repositoryManager *RepositoryManag
 		return nil, fmt.Errorf("failed to create S3 client: %v", err)
 	}
 
-	return application.NewCommandHandler(
-		applicationService,
+	// Application Service
+	applicationService := application.NewMachineApplicationService(
+		application.NewMachineDataMapper(),
+		domain.NewMachineDomainService(),
+		application.NewMachineApplicationServiceRepositoryManager(repositoryManager.Checkpoint),
 		application.NewCommandHandlerConfig(*cloudflareConfig),
 		application.NewCommandHandlerClient(s3Client),
+	)
+	return application.NewCommandHandler(
+		applicationService,
 	), nil
 }
 

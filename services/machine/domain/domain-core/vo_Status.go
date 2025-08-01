@@ -9,13 +9,13 @@ const (
 )
 
 func (s Status) String() string {
-	return []string{"Unknown", "Pending", "Completed"}[s]
+	return []string{"UNKNOWN", "PENDING", "SUCCESS"}[s]
 }
 
 func NewStatus(status string) Status {
 	hashMap := map[string]int{
-		"Pending":   1,
-		"Completed": 2,
+		"PENDING": 1,
+		"SUCCESS": 2,
 	}
 
 	return Status(hashMap[status])

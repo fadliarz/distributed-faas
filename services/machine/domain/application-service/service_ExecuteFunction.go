@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -19,72 +18,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type LogLine struct {
-	Timestamp time.Time
-	Content   string
-	Source    string
-}
-
-func (h *CommandHandler) ProcessInvocation(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
-	// Persist checkpoint
-	checkpointID, err := h.service.PersistCheckpoint(ctx, cmd)
-
-	log.Debug().Err(err).Msg("Inspecting error after persisting checkpoint")
-
-	// Ignore if the checkpoint already exists
-	if err != nil && errors.Is(err, domain.ErrCheckpointAlreadyExists) {
-		return checkpointID, nil
-	}
-
-	// Ignore if the checkpoint has already been reprocessed
-	if err != nil && errors.Is(err, domain.ErrCheckpointAlreadyReprocessed) {
-		return checkpointID, nil
-	}
-
+func (s *MachineApplicationServiceImpl) ExecuteFunction(ctx context.Context, url string, functionID, invocationID string) error {
+	sourceCode, err := s.fetchCodeFromURL(ctx, url)
 	if err != nil {
-		return "", fmt.Errorf("failed to persist checkpoint: %w", err)
-	}
-
-	log.Debug().Msgf("Executing function in separate goroutine")
-	go h.executeFunction(context.TODO(), cmd.SourceCodeURL, cmd.FunctionID, cmd.InvocationID)
-
-	return checkpointID, nil
-}
-
-func (h *CommandHandler) executeFunction(ctx context.Context, url string, functionID, invocationID string) error {
-	// Fetch the code from the URL
-	log.Debug().Msgf("Fetching code from URL: %s", url)
-	sourceCode, err := h.fetchCodeFromURL(ctx, url)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to fetch code from URL")
-
 		return fmt.Errorf("failed to fetch code from URL: %w", err)
 	}
 
-	// Execute the code
-	log.Debug().Msg("Executing code")
-	logs, err := h.executeCode(ctx, sourceCode)
+	logs, err := s.executeCode(ctx, sourceCode)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to execute code")
-
 		return fmt.Errorf("failed to execute code: %w", err)
 	}
 
-	log.Debug().Msgf("Execution completed with %d log lines", len(logs))
-	// Upload the logs to S3
-	err = h.uploadLog(ctx, logs, functionID, invocationID)
+	err = s.uploadLog(ctx, logs, functionID, invocationID)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to upload logs")
-
 		return fmt.Errorf("failed to upload logs: %w", err)
 	}
 
 	return nil
 }
 
-func (h *CommandHandler) fetchCodeFromURL(ctx context.Context, url string) (string, error) {
-	resp, err := h.client.S3.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &h.config.Cloudflare.BucketName,
+func (s *MachineApplicationServiceImpl) fetchCodeFromURL(ctx context.Context, url string) (string, error) {
+	resp, err := s.client.S3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &s.config.Cloudflare.BucketName,
 		Key:    &url,
 	})
 	if err != nil {
@@ -97,12 +52,10 @@ func (h *CommandHandler) fetchCodeFromURL(ctx context.Context, url string) (stri
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	log.Debug().Msgf("Fetched code content: %s", string(contentBytes))
-
 	return string(contentBytes), nil
 }
 
-func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLine, error) {
+func (s *MachineApplicationServiceImpl) executeCode(ctx context.Context, code string) ([]LogLine, error) {
 	// Prepare the command to run the code in a Docker container
 	cmd := exec.CommandContext(
 		ctx,
@@ -126,8 +79,6 @@ func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLin
 	var logLines []LogLine
 
 	// Start goroutines to read stdout and stderr
-	log.Debug().Msg("Starting goroutine to read stdout and stderr")
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -143,8 +94,6 @@ func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLin
 			})
 			mu.Unlock()
 		}
-
-		log.Debug().Msg("Finished reading stdout")
 
 		if err := scanner.Err(); err != nil {
 			log.Warn().Err(err).Msg("Error reading stdout")
@@ -168,14 +117,10 @@ func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLin
 			mu.Unlock()
 		}
 
-		log.Debug().Msg("Finished reading stderr")
-
 		if err := scanner.Err(); err != nil {
 			log.Warn().Err(err).Msg("Error reading stderr")
 		}
 	}()
-
-	log.Debug().Msgf("Executing command")
 
 	err = cmd.Start()
 	if err != nil {
@@ -185,8 +130,6 @@ func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLin
 	cmd.Wait()
 	wg.Wait()
 
-	log.Debug().Msg("Command execution completed")
-
 	if len(logLines) < 1 {
 		return nil, nil
 	}
@@ -194,7 +137,7 @@ func (h *CommandHandler) executeCode(ctx context.Context, code string) ([]LogLin
 	return logLines, nil
 }
 
-func (h *CommandHandler) uploadLog(ctx context.Context, logs []LogLine, functionID, invocationID string) error {
+func (s *MachineApplicationServiceImpl) uploadLog(ctx context.Context, logs []LogLine, functionID, invocationID string) error {
 	// Aggregate logs into a single string
 	aggregatedLogs := interleaveLogs(logs)
 
@@ -211,10 +154,8 @@ func (h *CommandHandler) uploadLog(ctx context.Context, logs []LogLine, function
 	// Upload the JSON to S3
 	key := fmt.Sprintf("%s/%s.json", functionID, invocationID)
 
-	log.Debug().Msgf("Uploading execution result to S3 with key: %s", key)
-
-	_, err = h.client.S3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: &h.config.Cloudflare.BucketName,
+	_, err = s.client.S3.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &s.config.Cloudflare.BucketName,
 		Key:    &key,
 		Body:   bytes.NewReader(jsonBytes),
 	})
@@ -222,7 +163,12 @@ func (h *CommandHandler) uploadLog(ctx context.Context, logs []LogLine, function
 		return fmt.Errorf("failed to upload execution result to S3: %w", err)
 	}
 
-	log.Debug().Msgf("Execution result uploaded successfully to S3 with key: %s", key)
+	err = s.repositoryManager.Checkpoint.UpdateStatusToSuccess(ctx, domain.NewCheckpointID(invocationID), domain.NewOutputURL(key))
+	if err != nil {
+		// Send critical log if the update fails
+
+		log.Warn().Err(err).Msgf("Failed to update checkpoint status to SUCCESS for ID %s", invocationID)
+	}
 
 	return nil
 }

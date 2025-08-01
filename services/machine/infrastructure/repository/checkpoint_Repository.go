@@ -6,6 +6,7 @@ import (
 
 	"github.com/fadliarz/distributed-faas/services/machine/domain/application-service"
 	"github.com/fadliarz/distributed-faas/services/machine/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CheckpointRepositoryImpl struct {
@@ -45,6 +46,20 @@ func (r *CheckpointRepositoryImpl) UpdateCheckpointTimestampIfStatusIsPendingAnd
 	err = r.repo.UpdateCheckpointTimestampIfStatusIsPendingAndTimestampLessThanThreshold(ctx, entity, thresholdInSec)
 	if err != nil {
 		return fmt.Errorf("failed to update checkpoint timestamp: %w", err)
+	}
+
+	return nil
+}
+
+func (r *CheckpointRepositoryImpl) UpdateStatusToSuccess(ctx context.Context, checkpointID domain.CheckpointID, outputURL domain.OutputURL) error {
+	primitiveCheckpointID, err := primitive.ObjectIDFromHex(checkpointID.String())
+	if err != nil {
+		return fmt.Errorf("")
+	}
+
+	err = r.repo.UpdateStatusToSuccess(ctx, primitiveCheckpointID, outputURL.String())
+	if err != nil {
+		return fmt.Errorf("failed to update checkpoint status to SUCCESS: %w", err)
 	}
 
 	return nil
