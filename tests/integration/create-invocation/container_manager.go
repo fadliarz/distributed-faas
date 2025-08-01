@@ -209,6 +209,16 @@ func (cm *ContainerManager) setupConnectionStrings() error {
 }
 
 func (cm *ContainerManager) setupDebeziumConnectors() error {
+	// g := new(errgroup.Group)
+
+	// g.Go(cm.setupInvocationDebeziumConnector)
+	// g.Go(cm.setupCheckpointDebeziumConnector)
+	// g.Go(cm.setupCheckpointToInvocationDebeziumConnector)
+
+	// if err := g.Wait(); err != nil {
+	// 	return fmt.Errorf("failed to setup Debezium connectors: %w", err)
+	// }
+
 	err := cm.setupInvocationDebeziumConnector()
 	if err != nil {
 		return fmt.Errorf("failed to setup invocation Debezium connector: %w", err)
@@ -299,7 +309,7 @@ func (cm *ContainerManager) setupInvocationDebeziumConnector() error {
 		}
 
 		if attempt < cm.config.DebeziumConfig.MaxRetries {
-			time.Sleep(cm.config.DebeziumConfig.RetryInterval * time.Duration(attempt))
+			time.Sleep(cm.config.DebeziumConfig.RetryInterval)
 		}
 	}
 
@@ -331,7 +341,6 @@ func (cm *ContainerManager) waitForInvocationConnectorReady(endpoint string) err
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
 			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.InvocationConnectorName)
 
-			time.Sleep(5 * time.Second)
 			return nil
 		}
 
@@ -413,7 +422,7 @@ func (cm *ContainerManager) setupCheckpointDebeziumConnector() error {
 		}
 
 		if attempt < cm.config.DebeziumConfig.MaxRetries {
-			time.Sleep(cm.config.DebeziumConfig.RetryInterval * time.Duration(attempt))
+			time.Sleep(cm.config.DebeziumConfig.RetryInterval)
 		}
 	}
 
@@ -445,7 +454,6 @@ func (cm *ContainerManager) waitForCheckpointConnectorReady(endpoint string) err
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
 			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointConnectorName)
 
-			time.Sleep(5 * time.Second)
 			return nil
 		}
 
@@ -535,7 +543,7 @@ func (cm *ContainerManager) setupCheckpointToInvocationDebeziumConnector() error
 		}
 
 		if attempt < cm.config.DebeziumConfig.MaxRetries {
-			time.Sleep(cm.config.DebeziumConfig.RetryInterval * time.Duration(attempt))
+			time.Sleep(cm.config.DebeziumConfig.RetryInterval)
 		}
 	}
 
@@ -567,7 +575,6 @@ func (cm *ContainerManager) waitForCheckpointToInvocationConnectorReady(endpoint
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
 			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
 
-			time.Sleep(5 * time.Second)
 			return nil
 		}
 

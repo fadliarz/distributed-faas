@@ -16,6 +16,8 @@ type TestConfig struct {
 	DebeziumConfig *DebeziumConfig
 
 	GrpcEndpoints *GrpcEndpoints
+
+	RequestDtos *RequestDtos
 }
 
 type ComposePaths struct {
@@ -77,6 +79,11 @@ type DebeziumConfig struct {
 type GrpcEndpoints struct {
 	FunctionService   string
 	InvocationService string
+	RegistrarService  string
+}
+
+type RequestDtos struct {
+	MachineAddress string
 }
 
 // Constructor for TestConfig
@@ -127,13 +134,17 @@ func NewDefaultTestConfig() *TestConfig {
 			CheckpointToInvocationConnectorName: "checkpoint-to-invocation-cdc",
 
 			MaxRetries:    30,              // Number of retries for Debezium connector creation
-			RetryInterval: 3 * time.Second, // Interval between retries
+			RetryInterval: 2 * time.Second, // Interval between retries
 			ReadyTimeout:  6 * time.Second,
 			ReadyInterval: 2 * time.Second,
 		},
 		GrpcEndpoints: &GrpcEndpoints{
 			FunctionService:   "localhost:50051",
 			InvocationService: "localhost:50053",
+			RegistrarService:  "localhost:50057",
+		},
+		RequestDtos: &RequestDtos{
+			MachineAddress: "distributed-faas-machine:50055",
 		},
 	}
 }

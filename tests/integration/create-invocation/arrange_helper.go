@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	registrar_service_v1 "github.com/fadliarz/distributed-faas/services/registrar-service/gen/go/registrar-service/v1"
 	function_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/function-service/v1"
 	invocation_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/invocation-service/v1"
 	"github.com/google/uuid"
@@ -47,7 +48,6 @@ func (h *ArrangeHelper) CreateFunction() *function_service_v1.CreateFunctionResp
 }
 
 func (h *ArrangeHelper) UpdateFunctionSourceCodeURL(userID string, functionID string, sourceCodeURL string) *function_service_v1.UpdateFunctionSourceCodeURLResponse {
-
 	conn, err := grpc.NewClient(h.config.GrpcEndpoints.FunctionService, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(h.t, err, "Failed to connect to gRPC server")
 
@@ -85,6 +85,28 @@ func (h *ArrangeHelper) CreateInvocation(userID string, functionID string) *invo
 
 	require.NoError(h.t, err, "Failed to create invocation")
 	require.NotEmpty(h.t, response.GetInvocationId(), "Invocation ID should not be empty")
+
+	return response
+}
+
+func (h *ArrangeHelper) RegisterMachine() *registrar_service_v1.RegisterMachineResponse {
+	conn, err := grpc.NewClient(h.config.GrpcEndpoints.RegistrarService, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(h.t, err, "Failed to connect to gRPC server")
+
+	defer conn.Close()
+
+	client := registrar_service_v1.NewRegistrarServiceClient(conn)
+
+	req := registrar_service_v1.RegisterMachineRequest{
+		Address: h.config.RequestDtos.MachineAddress,
+	}
+
+	response, err := client.RegisterMachine(h.t.Context(), &req)
+
+	require.NoError(h.t, err, "Failed to register machine")
+
+	require.NotEmpty(h.t, response.GetMachineId(), "Machine ID should not be empty")
+	require.Equal(h.t, h.config.RequestDtos.MachineAddress, response.GetAddress(), "Machine address should match the request")
 
 	return response
 }

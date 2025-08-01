@@ -104,7 +104,7 @@ func (km *KafkaManager) setupInvocationConsumer(bootstrapServer string) error {
 
 	km.Consumers.Invocation, err = kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  bootstrapServer,
-		"group.id":           "group-1",
+		"group.id":           "group-1-invocation",
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": km.config.KafkaConfig.AutoCommit,
 	})
@@ -125,7 +125,7 @@ func (km *KafkaManager) setupCheckpointConsumer(bootstrapServer string) error {
 
 	km.Consumers.Checkpoint, err = kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":  bootstrapServer,
-		"group.id":           "group-1",
+		"group.id":           "group-1-checkpoint",
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": km.config.KafkaConfig.AutoCommit,
 	})

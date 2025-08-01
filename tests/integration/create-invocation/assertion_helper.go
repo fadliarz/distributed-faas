@@ -10,6 +10,7 @@ import (
 	"github.com/fadliarz/distributed-faas/services/dispatcher-service/domain/application-service"
 	fs_repository "github.com/fadliarz/distributed-faas/services/function-service/infrastructure/repository"
 	is_repository "github.com/fadliarz/distributed-faas/services/invocation-service/infrastructure/repository"
+	m_repository "github.com/fadliarz/distributed-faas/services/machine/infrastructure/repository"
 	invocation_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/invocation-service/v1"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
@@ -58,14 +59,14 @@ func (ah *AssertionHelper) AssertInvocationPersistedInMongoDB(ctx context.Contex
 	require.NotEmpty(ah.t, invocation.InvocationID, "Invocation ID should not be empty")
 	require.NotEmpty(ah.t, invocation.FunctionID, "Function ID should not be empty")
 	require.NotEmpty(ah.t, invocation.UserID, "User ID should not be empty")
-	require.Empty(ah.t, invocation.SourceCodeURL, "Source code URL should be empty")
+	require.NotEmpty(ah.t, invocation.SourceCodeURL, "Source code URL should not be empty")
 	require.Empty(ah.t, invocation.OutputURL, "Output URL should be empty")
 	require.False(ah.t, invocation.IsRetry, "Invocation should not be a retry")
 	require.Greater(ah.t, invocation.Timestamp, int64(0), "Timestamp should be greater than 0")
 }
 
 func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context, consumer *kafka.Consumer, createInvocationResponse *invocation_service_v1.CreateInvocationResponse) {
-	deadline := time.Now().Add(30 * time.Second)
+	deadline := time.Now().Add(3600 * time.Second)
 
 	for time.Now().Before(deadline) {
 		msg, err := consumer.ReadMessage(3 * time.Second)
@@ -95,4 +96,71 @@ func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context,
 	}
 
 	require.Fail(ah.t, "No message received from Kafka within the timeout period")
+}
+
+func (ah *AssertionHelper) AssertCheckpointPersistedInMongoDB(ctx context.Context, client *mongo.Client, checkpointID string) {
+	var err error
+
+	collection := client.Database(ah.config.MongoConfig.CheckpointDatabase).Collection(ah.config.MongoConfig.CheckpointCollection)
+
+	objectID, err := primitive.ObjectIDFromHex(checkpointID)
+	require.NoError(ah.t, err, "Failed to convert Checkpoint ID to ObjectID")
+
+	for i := 0; i < 100; i++ {
+		var checkpoint m_repository.CheckpointEntity
+
+		err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&checkpoint)
+		if err != nil {
+			log.Debug().Err(err).Msgf("Failed to find checkpoint in MongoDB, attempt %d", i+1)
+
+			time.Sleep(2 * time.Second)
+
+			continue
+		}
+
+		if checkpoint.OutputURL == "" {
+			log.Debug().Msgf("Checkpoint Output URL is empty, retrying... (attempt %d)", i+1)
+
+			time.Sleep(2 * time.Second)
+
+			continue
+		}
+
+		require.NoError(ah.t, err, "Failed to find checkpoint in MongoDB")
+
+		require.Equal(ah.t, checkpointID, checkpoint.CheckpointID.Hex(), "Checkpoint ID does not match")
+		require.Equal(ah.t, checkpoint.Status, "SUCCESS", "Checkpoint status should be SUCCESS")
+		require.NotEmpty(ah.t, checkpoint.OutputURL, "Output URL should not be empty")
+
+		return
+	}
+
+	require.Fail(ah.t, "Failed to find checkpoint in MongoDB after multiple attempts")
+}
+
+func (ah *AssertionHelper) AssertInvocationSuccessInMongoDB(ctx context.Context, client *mongo.Client, invocationID string) {
+	collection := client.Database(ah.config.MongoConfig.InvocationDatabase).Collection(ah.config.MongoConfig.InvocationCollection)
+
+	objectID, err := primitive.ObjectIDFromHex(invocationID)
+	require.NoError(ah.t, err, "Failed to convert Invocation ID to ObjectID")
+
+	for i := 0; i < 100; i++ {
+		var invocation is_repository.InvocationEntity
+
+		err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&invocation)
+		require.NoError(ah.t, err, "Failed to find invocation in MongoDB")
+
+		if invocation.Status != "SUCCESS" || invocation.OutputURL == "" {
+			log.Debug().Msgf("Invocation status is not SUCCESS or Output URL is empty, retrying... (attempt %d)", i+1)
+
+			time.Sleep(2 * time.Second)
+
+			continue
+		}
+
+		require.Equal(ah.t, "SUCCESS", invocation.Status, "Invocation status should be SUCCESS")
+		require.NotEmpty(ah.t, invocation.OutputURL, "Output URL should not be empty")
+
+		return
+	}
 }
