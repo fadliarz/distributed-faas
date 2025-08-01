@@ -30,19 +30,20 @@ func (s *FunctionServer) Register(server *grpc.Server) {
 
 func (s *FunctionServer) CreateFunction(ctx context.Context, req *function_service_v1.CreateFunctionRequest) (*function_service_v1.CreateFunctionResponse, error) {
 	cmd := &application.CreateFunctionCommand{
-		UserID:        req.UserId,
-		SourceCodeURL: req.SourceCodeUrl,
+		UserID: req.UserId,
 	}
 
-	functionID, err := s.handler.CreateFunction(ctx, cmd)
+	function, err := s.handler.CreateFunction(ctx, cmd)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to create function: %v", err)
 	}
 
 	return &function_service_v1.CreateFunctionResponse{
-		FunctionId: functionID.String(),
-		Status:     "success",
-		Message:    "Function created successfully",
+		FunctionId:    function.FunctionID.String(),
+		UserId:        function.UserID.String(),
+		SourceCodeUrl: function.SourceCodeURL.String(),
+		Status:        "success",
+		Message:       "Function created successfully",
 	}, nil
 }
 

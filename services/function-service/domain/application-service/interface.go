@@ -22,7 +22,7 @@ type FunctionDataMapper interface {
 }
 
 type FunctionApplicationService interface {
-	PersistFunction(ctx context.Context, command *CreateFunctionCommand) (domain.FunctionID, error)
+	PersistFunction(ctx context.Context, command *CreateFunctionCommand) (*domain.Function, error)
 	GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error)
 	UpdateFunctionSourceCodeURL(ctx context.Context, command *UpdateFunctionSourceCodeURLCommand) error
 }

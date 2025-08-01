@@ -12,7 +12,6 @@ func NewFunctionDataMapper() FunctionDataMapper {
 
 func (m *FunctionDataMapperImpl) CreateFunctionCommandToFunction(cmd *CreateFunctionCommand) (*domain.Function, error) {
 	return &domain.Function{
-		UserID:        domain.NewUserID(cmd.UserID),
-		SourceCodeURL: domain.NewSourceCodeURL(cmd.SourceCodeURL),
+		UserID: domain.NewUserID(cmd.UserID),
 	}, nil
 }

@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FunctionService_CreateFunction_FullMethodName = "/fadliarz.distributed_faas.function_service.v1.FunctionService/CreateFunction"
+	FunctionService_CreateFunction_FullMethodName                = "/fadliarz.distributed_faas.function_service.v1.FunctionService/CreateFunction"
+	FunctionService_GetFunctionUploadPresignedURL_FullMethodName = "/fadliarz.distributed_faas.function_service.v1.FunctionService/GetFunctionUploadPresignedURL"
+	FunctionService_UpdateFunctionSourceCodeURL_FullMethodName   = "/fadliarz.distributed_faas.function_service.v1.FunctionService/UpdateFunctionSourceCodeURL"
 )
 
 // FunctionServiceClient is the client API for FunctionService service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FunctionServiceClient interface {
 	CreateFunction(ctx context.Context, in *CreateFunctionRequest, opts ...grpc.CallOption) (*CreateFunctionResponse, error)
+	GetFunctionUploadPresignedURL(ctx context.Context, in *GetFunctionUploadPresignedURLRequest, opts ...grpc.CallOption) (*GetFunctionUploadPresignedURLResponse, error)
+	UpdateFunctionSourceCodeURL(ctx context.Context, in *UpdateFunctionSourceCodeURLRequest, opts ...grpc.CallOption) (*UpdateFunctionSourceCodeURLResponse, error)
 }
 
 type functionServiceClient struct {
@@ -47,11 +51,33 @@ func (c *functionServiceClient) CreateFunction(ctx context.Context, in *CreateFu
 	return out, nil
 }
 
+func (c *functionServiceClient) GetFunctionUploadPresignedURL(ctx context.Context, in *GetFunctionUploadPresignedURLRequest, opts ...grpc.CallOption) (*GetFunctionUploadPresignedURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFunctionUploadPresignedURLResponse)
+	err := c.cc.Invoke(ctx, FunctionService_GetFunctionUploadPresignedURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *functionServiceClient) UpdateFunctionSourceCodeURL(ctx context.Context, in *UpdateFunctionSourceCodeURLRequest, opts ...grpc.CallOption) (*UpdateFunctionSourceCodeURLResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateFunctionSourceCodeURLResponse)
+	err := c.cc.Invoke(ctx, FunctionService_UpdateFunctionSourceCodeURL_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FunctionServiceServer is the server API for FunctionService service.
 // All implementations must embed UnimplementedFunctionServiceServer
 // for forward compatibility.
 type FunctionServiceServer interface {
 	CreateFunction(context.Context, *CreateFunctionRequest) (*CreateFunctionResponse, error)
+	GetFunctionUploadPresignedURL(context.Context, *GetFunctionUploadPresignedURLRequest) (*GetFunctionUploadPresignedURLResponse, error)
+	UpdateFunctionSourceCodeURL(context.Context, *UpdateFunctionSourceCodeURLRequest) (*UpdateFunctionSourceCodeURLResponse, error)
 	mustEmbedUnimplementedFunctionServiceServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedFunctionServiceServer struct{}
 
 func (UnimplementedFunctionServiceServer) CreateFunction(context.Context, *CreateFunctionRequest) (*CreateFunctionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFunction not implemented")
+}
+func (UnimplementedFunctionServiceServer) GetFunctionUploadPresignedURL(context.Context, *GetFunctionUploadPresignedURLRequest) (*GetFunctionUploadPresignedURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunctionUploadPresignedURL not implemented")
+}
+func (UnimplementedFunctionServiceServer) UpdateFunctionSourceCodeURL(context.Context, *UpdateFunctionSourceCodeURLRequest) (*UpdateFunctionSourceCodeURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateFunctionSourceCodeURL not implemented")
 }
 func (UnimplementedFunctionServiceServer) mustEmbedUnimplementedFunctionServiceServer() {}
 func (UnimplementedFunctionServiceServer) testEmbeddedByValue()                         {}
@@ -104,6 +136,42 @@ func _FunctionService_CreateFunction_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FunctionService_GetFunctionUploadPresignedURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunctionUploadPresignedURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FunctionServiceServer).GetFunctionUploadPresignedURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FunctionService_GetFunctionUploadPresignedURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FunctionServiceServer).GetFunctionUploadPresignedURL(ctx, req.(*GetFunctionUploadPresignedURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FunctionService_UpdateFunctionSourceCodeURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateFunctionSourceCodeURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FunctionServiceServer).UpdateFunctionSourceCodeURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FunctionService_UpdateFunctionSourceCodeURL_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FunctionServiceServer).UpdateFunctionSourceCodeURL(ctx, req.(*UpdateFunctionSourceCodeURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FunctionService_ServiceDesc is the grpc.ServiceDesc for FunctionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +182,14 @@ var FunctionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateFunction",
 			Handler:    _FunctionService_CreateFunction_Handler,
+		},
+		{
+			MethodName: "GetFunctionUploadPresignedURL",
+			Handler:    _FunctionService_GetFunctionUploadPresignedURL_Handler,
+		},
+		{
+			MethodName: "UpdateFunctionSourceCodeURL",
+			Handler:    _FunctionService_UpdateFunctionSourceCodeURL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -39,26 +39,26 @@ func NewFunctionApplicationServiceRepositoryManager(function FunctionRepository)
 
 // Methods
 
-func (s *FunctionApplicationServiceImpl) PersistFunction(ctx context.Context, command *CreateFunctionCommand) (domain.FunctionID, error) {
+func (s *FunctionApplicationServiceImpl) PersistFunction(ctx context.Context, command *CreateFunctionCommand) (*domain.Function, error) {
 	// Map command
 	function, err := s.mapper.CreateFunctionCommandToFunction(command)
 	if err != nil {
-		return "", fmt.Errorf("failed to map command to function: %w", err)
+		return nil, fmt.Errorf("failed to map command to function: %w", err)
 	}
 
 	// Validate and initiate the function
 	err = s.domainService.ValidateAndInitiateFunction(function, primitive.NewObjectID().Hex())
 	if err != nil {
-		return "", fmt.Errorf("failed to validate and initiate function: %w", err)
+		return nil, fmt.Errorf("failed to validate and initiate function: %w", err)
 	}
 
 	// Save the function
-	functionID, err := s.repositoryManager.Function.Save(ctx, function)
+	_, err = s.repositoryManager.Function.Save(ctx, function)
 	if err != nil {
-		return "", fmt.Errorf("failed to save function: %w", err)
+		return nil, fmt.Errorf("failed to save function: %w", err)
 	}
 
-	return functionID, nil
+	return function, nil
 }
 
 func (s *FunctionApplicationServiceImpl) GetFunctionUploadPresignedURL(ctx context.Context, query *GetFunctionUploadPresignedURLQuery) (string, error) {

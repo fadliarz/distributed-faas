@@ -1,8 +1,7 @@
 package application
 
 type CreateFunctionCommand struct {
-	UserID        string
-	SourceCodeURL string
+	UserID string
 }
 
 type GetFunctionUploadPresignedURLQuery struct {

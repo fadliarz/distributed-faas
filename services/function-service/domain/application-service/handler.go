@@ -21,11 +21,13 @@ func NewCommandHandler(service FunctionApplicationService) *CommandHandler {
 
 // Methods
 
-func (h *CommandHandler) CreateFunction(ctx context.Context, command *CreateFunctionCommand) (domain.FunctionID, error) {
+func (h *CommandHandler) CreateFunction(ctx context.Context, command *CreateFunctionCommand) (*domain.Function, error) {
 	functionID, err := h.service.PersistFunction(ctx, command)
 	if err != nil {
-		return "", fmt.Errorf("failed to create function: %w", err)
+		return nil, fmt.Errorf("failed to create function: %w", err)
 	}
+
+	return functionID, nil
 
 	return functionID, nil
 }
