@@ -14,8 +14,9 @@ message RegisterMachineRequest {
 
 message RegisterMachineResponse {
     string machine_id = 1;
-    string status = 2;
-    string message = 3;
+    string address = 2;
+    string status = 3;
+    string message = 4;
 }
 
 message HeartbeatRequest {
