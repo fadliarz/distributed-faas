@@ -68,7 +68,7 @@ func (h *ArrangeHelper) UpdateFunctionSourceCodeURL(userID string, functionID st
 	return response
 }
 
-func (h *ArrangeHelper) CreateInvocation(userID string, functionID string) *invocation_service_v1.CreateInvocationResponse {
+func (h *ArrangeHelper) CreateInvocation(userID string, functionID string) (*invocation_service_v1.CreateInvocationResponse, error) {
 	conn, err := grpc.NewClient(h.config.GrpcEndpoints.InvocationService, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(h.t, err, "Failed to connect to gRPC server")
 
@@ -83,10 +83,8 @@ func (h *ArrangeHelper) CreateInvocation(userID string, functionID string) *invo
 
 	response, err := client.CreateInvocation(h.t.Context(), &req)
 
-	require.NoError(h.t, err, "Failed to create invocation")
-	require.NotEmpty(h.t, response.GetInvocationId(), "Invocation ID should not be empty")
 
-	return response
+	return response, err
 }
 
 func (h *ArrangeHelper) RegisterMachine() *registrar_service_v1.RegisterMachineResponse {

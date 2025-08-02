@@ -17,6 +17,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AssertionHelper struct {
@@ -29,6 +31,20 @@ func NewAssertionHelper(t *testing.T, config *TestConfig) *AssertionHelper {
 		t:      t,
 		config: config,
 	}
+}
+
+func (ah *AssertionHelper) AssertInvocationCreatedSuccessfully(createInvocationRespose *invocation_service_v1.CreateInvocationResponse, err error) {
+	require.NoError(ah.t, err, "Failed to create invocation")
+	require.NotEmpty(ah.t, createInvocationRespose.GetInvocationId(), "Invocation ID should not be empty")
+}
+
+func (ah *AssertionHelper) AssertInvocationUnauthorized(createInvocationRespose *invocation_service_v1.CreateInvocationResponse, err error) {
+	require.Nil(ah.t, createInvocationRespose, "Create invocation response should be nil")
+	require.Error(ah.t, err, "Expected an error when creating invocation")
+
+	st, ok := status.FromError(err)
+	require.True(ah.t, ok, "Error should be a gRPC status error")
+	require.Equal(ah.t, codes.PermissionDenied.String(), st.Code().String(), "Expected PERMISSION_DENIED status code")
 }
 
 func (ah *AssertionHelper) AssertFunctionPersistedInFunctionMongoDB(ctx context.Context, client *mongo.Client, functionID string) {
@@ -72,7 +88,7 @@ func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context,
 		msg, err := consumer.ReadMessage(3 * time.Second)
 		if err != nil {
 			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
-				log.Debug().Msg("No message received from Kafka within the timeout period, retrying...")
+				log.Debug().Msg("[AssertInvocationPersistedInKafka] No message received from Kafka within the timeout period, retrying...")
 
 				continue
 			}
@@ -136,6 +152,37 @@ func (ah *AssertionHelper) AssertCheckpointPersistedInMongoDB(ctx context.Contex
 	}
 
 	require.Fail(ah.t, "Failed to find checkpoint in MongoDB after multiple attempts")
+}
+
+func (ah *AssertionHelper) AssertCheckpointPersistedInKafka(ctx context.Context, consumer *kafka.Consumer, createInvocationResponse *invocation_service_v1.CreateInvocationResponse) {
+	deadline := time.Now().Add(120 * time.Second)
+
+	for time.Now().Before(deadline) {
+		msg, err := consumer.ReadMessage(3 * time.Second)
+		if err != nil {
+			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
+				log.Debug().Msg("[AssertCheckpointPersistedInKafka] No message received from Kafka within the timeout period, retrying...")
+
+				continue
+			}
+
+			require.NoError(ah.t, err, "Failed to read message from Kafka")
+		}
+
+		if msg != nil && len(msg.Value) > 0 {
+			var event CheckpointEvent
+			err := json.Unmarshal(msg.Value, &event)
+
+			require.NoError(ah.t, err, "Failed to unmarshal message from Kafka")
+
+			require.Equal(ah.t, createInvocationResponse.InvocationId, event.CheckpointID, "Checkpoint ID does not match")
+			require.NotEmpty(ah.t, event.OutputURL, "Output URL should not be empty")
+
+			return
+		}
+	}
+
+	require.Fail(ah.t, "No message received from Kafka within the timeout period")
 }
 
 func (ah *AssertionHelper) AssertInvocationSuccessInMongoDB(ctx context.Context, client *mongo.Client, invocationID string) {
