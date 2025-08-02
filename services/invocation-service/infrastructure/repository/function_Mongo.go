@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/fadliarz/distributed-faas/common"
-	"github.com/fadliarz/distributed-faas/services/invocation-service/domain/domain-core"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -40,7 +39,7 @@ func (r *FunctionMongoRepository) FindByUserIDAndFunctionID(ctx context.Context,
 	err := r.collection.FindOne(ctx, filter).Decode(&function)
 
 	if err != nil && err == mongo.ErrNoDocuments {
-		return nil, domain.NewErrFunctionNotFound(err)
+		return nil, nil
 	}
 
 	if err != nil {
