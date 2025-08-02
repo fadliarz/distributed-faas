@@ -66,7 +66,7 @@ func (ah *AssertionHelper) AssertInvocationPersistedInMongoDB(ctx context.Contex
 }
 
 func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context, consumer *kafka.Consumer, createInvocationResponse *invocation_service_v1.CreateInvocationResponse) {
-	deadline := time.Now().Add(3600 * time.Second)
+	deadline := time.Now().Add(120 * time.Second)
 
 	for time.Now().Before(deadline) {
 		msg, err := consumer.ReadMessage(3 * time.Second)
