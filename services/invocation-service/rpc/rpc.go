@@ -41,6 +41,10 @@ func (s *InvocationServer) CreateInvocation(ctx context.Context, req *invocation
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to create invocation")
 
+		if errors.Is(err, domain.ErrUserNotAuthorized) {
+			return nil, status.Errorf(codes.PermissionDenied, "User not authorized to invoke this function")
+		}
+
 		return nil, status.Errorf(codes.Internal, "Failed to create invocation: %v", err)
 	}
 
