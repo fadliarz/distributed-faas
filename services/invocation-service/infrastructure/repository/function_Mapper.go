@@ -14,6 +14,10 @@ func NewFunctionDataAccessMapper() FunctionDataAccessMapper {
 }
 
 func (m *FunctionDataAccessMapperImpl) Entity(function *domain.Function) (*FunctionEntity, error) {
+	if function == nil {
+		return nil, nil
+	}
+
 	functionID, err := primitive.ObjectIDFromHex(function.FunctionID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid function ID: %w", err)
@@ -27,6 +31,10 @@ func (m *FunctionDataAccessMapperImpl) Entity(function *domain.Function) (*Funct
 }
 
 func (m *FunctionDataAccessMapperImpl) Domain(entity *FunctionEntity) *domain.Function {
+	if entity == nil {
+		return nil
+	}
+
 	return &domain.Function{
 		UserID:        domain.NewUserID(entity.UserID),
 		FunctionID:    domain.NewFunctionID(entity.FunctionID.Hex()),
