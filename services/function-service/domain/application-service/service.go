@@ -40,19 +40,16 @@ func NewFunctionApplicationServiceRepositoryManager(function FunctionRepository)
 // Methods
 
 func (s *FunctionApplicationServiceImpl) PersistFunction(ctx context.Context, command *CreateFunctionCommand) (*domain.Function, error) {
-	// Map command
 	function, err := s.mapper.CreateFunctionCommandToFunction(command)
 	if err != nil {
 		return nil, fmt.Errorf("failed to map command to function: %w", err)
 	}
 
-	// Validate and initiate the function
 	err = s.domainService.ValidateAndInitiateFunction(function, primitive.NewObjectID().Hex())
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate and initiate function: %w", err)
 	}
 
-	// Save the function
 	_, err = s.repositoryManager.Function.Save(ctx, function)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save function: %w", err)
@@ -83,12 +80,8 @@ func (s *FunctionApplicationServiceImpl) UpdateFunctionSourceCodeURL(ctx context
 	err := s.repositoryManager.Function.UpdateSourceCodeURLByUserIDAndFunctionID(ctx, domain.NewUserID(command.UserID), domain.NewFunctionID(command.FunctionID), domain.NewSourceCodeURL(command.SourceCodeURL))
 
 	if err != nil && errors.Is(err, domain.ErrFunctionNotFound) {
-		return domain.NewErrUserNotAuthorized(fmt.Errorf("function with ID %s not found", command.FunctionID))
+		return domain.NewErrUserNotAuthorized(err)
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to update function source code URL: %w", err)
-	}
-
-	return nil
+	return err
 }
