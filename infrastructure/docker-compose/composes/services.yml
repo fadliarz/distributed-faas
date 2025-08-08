@@ -109,3 +109,18 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
+
+  distributed-faas-retry-service:
+    container_name: distributed-faas-retry-service
+    build:
+      context: ../../../
+      dockerfile: services/retry-service/Dockerfile
+    environment:
+      CHECKPOINT_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CHECKPOINT_MONGO_DATABASE: checkpoint-db
+      CHECKPOINT_MONGO_COLLECTION: checkpoint
+      RETRY_INTERVAL_IN_SEC: 10
+      THRESHOLD_IN_SEC: 300
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas} 
+    restart: always
