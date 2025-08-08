@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/fadliarz/distributed-faas/common"
 	"github.com/fadliarz/distributed-faas/services/machine/domain/domain-core"
@@ -28,16 +29,20 @@ func (r *CheckpointMongoRepository) Save(ctx context.Context, entity *Checkpoint
 	return result.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (r *CheckpointMongoRepository) UpdateCheckpointTimestampIfStatusIsPendingAndTimestampLessThanThreshold(
-	ctx context.Context, checkpoint *CheckpointEntity, thresholdInSec int64) error {
-
-	result, err := r.collection.UpdateOne(ctx, bson.M{
+func (r *CheckpointMongoRepository) UpdateCheckpointTimestampIfRetrying(ctx context.Context, checkpoint *CheckpointEntity, thresholdInSec int64) error {
+	filter := bson.M{
 		"_id":       checkpoint.CheckpointID,
-		"status":    "PENDING",
-		"timestamp": bson.M{"$lt": checkpoint.Timestamp - thresholdInSec},
-	}, bson.M{
-		"$set": bson.M{"timestamp": checkpoint.Timestamp},
-	})
+		"status":    "RETRYING",
+		"timestamp": checkpoint.Timestamp,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"status":    "REPROCESSING",
+			"timestamp": time.Now().Unix(),
+		},
+	}
+
+	result, err := r.collection.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return fmt.Errorf("failed to update checkpoint timestamp: %w", err)

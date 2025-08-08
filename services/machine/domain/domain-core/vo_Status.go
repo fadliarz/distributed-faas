@@ -5,22 +5,22 @@ type Status int
 const (
 	Unknown Status = iota
 	Pending
-	Completed
+	Retrying
+	Reprocessing
+	Success
 )
 
 func (s Status) String() string {
-	return []string{"UNKNOWN", "PENDING", "SUCCESS"}[s]
+	return []string{"UNKNOWN", "PENDING", "RETRYING", "REPROCESSING", "SUCCESS"}[s]
 }
 
 func NewStatus(status string) Status {
 	hashMap := map[string]int{
-		"PENDING": 1,
-		"SUCCESS": 2,
+		"PENDING":      1,
+		"RETRYING":     2,
+		"REPROCESSING": 3,
+		"SUCCESS":      4,
 	}
 
 	return Status(hashMap[status])
-}
-
-func NewStatusFromInt(status int) Status {
-	return Status(status)
 }

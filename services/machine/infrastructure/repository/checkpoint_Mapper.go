@@ -14,6 +14,10 @@ func NewCheckpointDataAccessMapperImpl() CheckpointDataAccessMapper {
 }
 
 func (m *CheckpointDataAccessMapperImpl) Entity(checkpoint *domain.Checkpoint) (*CheckpointEntity, error) {
+	if checkpoint == nil {
+		return nil, nil
+	}
+
 	checkpointID, err := primitive.ObjectIDFromHex(checkpoint.CheckpointID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid checkpoint ID: %v", err)
@@ -24,20 +28,24 @@ func (m *CheckpointDataAccessMapperImpl) Entity(checkpoint *domain.Checkpoint) (
 		FunctionID:    checkpoint.FunctionID.String(),
 		UserID:        checkpoint.UserID.String(),
 		SourceCodeURL: checkpoint.SourceCodeURL.String(),
-		Timestamp:     checkpoint.Timestamp.Int64(),
 		Status:        checkpoint.Status.String(),
+		Timestamp:     checkpoint.Timestamp.Int64(),
 		OutputURL:     checkpoint.OutputURL.String(),
 	}, nil
 }
 
 func (m *CheckpointDataAccessMapperImpl) Domain(entity *CheckpointEntity) *domain.Checkpoint {
+	if entity == nil {
+		return nil
+	}
+
 	return &domain.Checkpoint{
 		CheckpointID:  domain.NewCheckpointID(entity.CheckpointID.Hex()),
 		FunctionID:    domain.NewFunctionID(entity.FunctionID),
 		UserID:        domain.NewUserID(entity.UserID),
 		SourceCodeURL: domain.NewSourceCodeURL(entity.SourceCodeURL),
-		Timestamp:     domain.NewTimestamp(entity.Timestamp),
 		Status:        domain.NewStatus(entity.Status),
+		Timestamp:     domain.NewTimestamp(entity.Timestamp),
 		OutputURL:     domain.OutputURL(entity.SourceCodeURL),
 	}
 }

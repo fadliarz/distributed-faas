@@ -3,10 +3,9 @@ package domain
 type Checkpoint struct {
 	CheckpointID  CheckpointID
 	FunctionID    FunctionID
-	UserID UserID
+	UserID        UserID
 	SourceCodeURL SourceCodeURL
-	Timestamp     Timestamp
 	Status        Status
+	Timestamp     Timestamp
 	OutputURL     OutputURL
-	IsRetry       IsRetry
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/fadliarz/distributed-faas/services/machine/config"
 	"github.com/fadliarz/distributed-faas/services/machine/domain/domain-core"
+	"github.com/rs/zerolog/log"
 )
 
 // Constructors
@@ -42,11 +43,15 @@ func (h *CommandHandler) ProcessInvocation(ctx context.Context, cmd *ProcessInvo
 
 	// Ignore if the checkpoint already exists
 	if err != nil && errors.Is(err, domain.ErrCheckpointAlreadyExists) {
+		log.Debug().Err(err).Msgf("Checkpoint already exists for FunctionID: %s and InvocationID: %s", cmd.FunctionID, cmd.InvocationID)
+
 		return checkpointID, nil
 	}
 
 	// Ignore if the checkpoint has already been reprocessed
 	if err != nil && errors.Is(err, domain.ErrCheckpointAlreadyReprocessed) {
+		log.Debug().Err(err).Msgf("Checkpoint has already been reprocessed for FunctionID: %s and InvocationID: %s", cmd.FunctionID, cmd.InvocationID)
+
 		return checkpointID, nil
 	}
 
@@ -55,6 +60,8 @@ func (h *CommandHandler) ProcessInvocation(ctx context.Context, cmd *ProcessInvo
 	}
 
 	go h.service.ExecuteFunction(context.TODO(), cmd.SourceCodeURL, cmd.FunctionID, cmd.InvocationID)
+
+	log.Debug().Msgf("Checkpoint persisted with ID: %s for FunctionID: %s and InvocationID: %s", checkpointID, cmd.FunctionID, cmd.InvocationID)
 
 	return checkpointID, nil
 }

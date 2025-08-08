@@ -32,10 +32,13 @@ func (s *MachineServer) ExecuteFunction(ctx context.Context, req *machine_servic
 	cmd := &application.ProcessInvocationCommand{
 		InvocationID:  req.InvocationId,
 		FunctionID:    req.FunctionId,
+		UserID:        req.UserId,
 		SourceCodeURL: req.SourceCodeUrl,
+		Status:        req.Status,
+		Timestamp:     req.Timestamp,
 	}
 
-	log.Info().Msgf("Executing function for InvocationID: %s, FunctionID: %s", req.InvocationId, req.FunctionId)
+	log.Debug().Msgf("Received ExecuteFunction request: %+v", cmd)
 
 	_, err := s.handler.ProcessInvocation(s.ctx, cmd)
 	if err != nil {

@@ -5,23 +5,24 @@ import (
 	"fmt"
 
 	"github.com/fadliarz/distributed-faas/services/machine/domain/domain-core"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (s *MachineApplicationServiceImpl) PersistCheckpoint(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
-	if cmd.IsRetry == true {
-		return s.persistCheckpointIfIsRetryIsTrue(ctx, cmd)
+	if cmd.Status == domain.Pending.String() {
+		return s.persistCheckpoint(ctx, cmd)
 	}
 
-	return s.persistCheckpointIfIsRetryIsFalse(ctx, cmd)
+	if cmd.Status == domain.Retrying.String() {
+		return s.updateCheckpointTimestamp(ctx, cmd)
+	}
 
+	return "", fmt.Errorf("unsupported status: %s", cmd.Status)
 }
 
-func (s *MachineApplicationServiceImpl) persistCheckpointIfIsRetryIsTrue(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
+func (s *MachineApplicationServiceImpl) updateCheckpointTimestamp(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
 	checkpoint := s.mapper.ProcessInvocationCommandToCheckpoint(cmd)
 
-	// Save checkpoint
-	err := s.repositoryManager.Checkpoint.UpdateCheckpointTimestampIfStatusIsPendingAndTimestampLessThanThreshold(ctx, checkpoint, 10)
+	err := s.repositoryManager.Checkpoint.UpdateCheckpointTimestampIfRetrying(ctx, checkpoint, 10)
 	if err != nil {
 		return "", fmt.Errorf("failed to save checkpoint: %w", err)
 	}
@@ -29,16 +30,14 @@ func (s *MachineApplicationServiceImpl) persistCheckpointIfIsRetryIsTrue(ctx con
 	return checkpoint.CheckpointID, nil
 }
 
-func (s *MachineApplicationServiceImpl) persistCheckpointIfIsRetryIsFalse(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
+func (s *MachineApplicationServiceImpl) persistCheckpoint(ctx context.Context, cmd *ProcessInvocationCommand) (domain.CheckpointID, error) {
 	checkpoint := s.mapper.ProcessInvocationCommandToCheckpoint(cmd)
 
-	// Validate and initiate checkpoint
-	err := s.service.ValidateAndInitiateCheckpoint(checkpoint, domain.NewCheckpointID(primitive.NewObjectID().Hex()))
+	err := s.service.ValidateAndInitiateCheckpoint(checkpoint)
 	if err != nil {
 		return "", fmt.Errorf("failed to validate and initiate checkpoint: %w", err)
 	}
 
-	// Save checkpoint
 	checkpointID, err := s.repositoryManager.Checkpoint.Save(ctx, checkpoint)
 	if err != nil {
 		return "", fmt.Errorf("failed to save checkpoint: %w", err)

@@ -14,8 +14,9 @@ func (m *MachineDataMapperImpl) ProcessInvocationCommandToCheckpoint(cmd *Proces
 	return &domain.Checkpoint{
 		CheckpointID:  domain.NewCheckpointID(cmd.InvocationID),
 		FunctionID:    domain.NewFunctionID(cmd.FunctionID),
+		UserID:        domain.NewUserID(cmd.UserID),
 		SourceCodeURL: domain.NewSourceCodeURL(cmd.SourceCodeURL),
+		Status:        domain.NewStatus(cmd.Status),
 		Timestamp:     domain.NewTimestamp(cmd.Timestamp),
-		IsRetry:       domain.NewIsRetry(cmd.IsRetry),
 	}
 }

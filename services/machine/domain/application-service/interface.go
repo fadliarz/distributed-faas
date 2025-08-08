@@ -11,8 +11,7 @@ import (
 
 type CheckpointRepository interface {
 	Save(ctx context.Context, checkpoint *domain.Checkpoint) (domain.CheckpointID, error)
-	UpdateCheckpointTimestampIfStatusIsPendingAndTimestampLessThanThreshold(
-		ctx context.Context, checkpoint *domain.Checkpoint, thresholdInSec int64) error
+	UpdateCheckpointTimestampIfRetrying(ctx context.Context, checkpoint *domain.Checkpoint, thresholdInSec int64) error
 	UpdateStatusToSuccess(ctx context.Context, checkpointID domain.CheckpointID, outputURL domain.OutputURL) error
 }
 

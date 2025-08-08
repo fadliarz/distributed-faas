@@ -5,6 +5,6 @@ type ProcessInvocationCommand struct {
 	FunctionID    string
 	UserID        string
 	SourceCodeURL string
+	Status        string
 	Timestamp     int64
-	IsRetry       bool
 }

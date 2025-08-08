@@ -19,20 +19,30 @@ import (
 )
 
 func (s *MachineApplicationServiceImpl) ExecuteFunction(ctx context.Context, url string, functionID, invocationID string) error {
+	log.Debug().Msgf("Executing function with ID %s and invocation ID %s", functionID, invocationID)
+
 	sourceCode, err := s.fetchCodeFromURL(ctx, url)
 	if err != nil {
+		log.Debug().Err(err).Msg("Failed to fetch code from URL")
+
 		return fmt.Errorf("failed to fetch code from URL: %w", err)
 	}
 
 	logs, err := s.executeCode(ctx, sourceCode)
 	if err != nil {
+		log.Debug().Err(err).Msg("Failed to execute code")
+
 		return fmt.Errorf("failed to execute code: %w", err)
 	}
 
 	err = s.uploadLog(ctx, logs, functionID, invocationID)
 	if err != nil {
+		log.Debug().Err(err).Msg("Failed to upload logs")
+
 		return fmt.Errorf("failed to upload logs: %w", err)
 	}
+
+	log.Debug().Msg("Function execution completed successfully")
 
 	return nil
 }
