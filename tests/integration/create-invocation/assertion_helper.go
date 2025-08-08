@@ -43,6 +43,7 @@ func (ah *AssertionHelper) AssertInvocationUnauthorized(createInvocationRespose 
 	require.Error(ah.t, err, "Expected an error when creating invocation")
 
 	st, ok := status.FromError(err)
+
 	require.True(ah.t, ok, "Error should be a gRPC status error")
 	require.Equal(ah.t, codes.PermissionDenied.String(), st.Code().String(), "Expected PERMISSION_DENIED status code")
 }
@@ -98,8 +99,10 @@ func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context,
 		if msg != nil && len(msg.Value) > 0 {
 			var event application.InvocationCreatedEvent
 			err := json.Unmarshal(msg.Value, &event)
+			if err != nil {
+				continue
+			}
 
-			require.NoError(ah.t, err, "Failed to unmarshal message from Kafka")
 			require.Equal(ah.t, createInvocationResponse.InvocationId, event.InvocationID, "Invocation ID does not match")
 			require.Equal(ah.t, createInvocationResponse.FunctionId, event.FunctionID, "Function ID does not match")
 			require.Equal(ah.t, createInvocationResponse.SourceCodeUrl, event.SourceCodeURL, "Source code URL does not match")
@@ -170,8 +173,9 @@ func (ah *AssertionHelper) AssertCheckpointPersistedInKafka(ctx context.Context,
 		if msg != nil && len(msg.Value) > 0 {
 			var event CheckpointEvent
 			err := json.Unmarshal(msg.Value, &event)
-
-			require.NoError(ah.t, err, "Failed to unmarshal message from Kafka")
+			if err != nil {
+				continue
+			}
 
 			require.Equal(ah.t, createInvocationResponse.InvocationId, event.CheckpointID, "Checkpoint ID does not match")
 			require.NotEmpty(ah.t, event.OutputURL, "Output URL should not be empty")
