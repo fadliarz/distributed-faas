@@ -11,6 +11,10 @@ func NewMachineDataAccessMapper() MachineDataAccessMapper {
 }
 
 func (m *MachineDataAccessMapperImpl) Domain(entity *MachineEntity) *domain.Machine {
+	if entity == nil {
+		return nil
+	}
+
 	return &domain.Machine{
 		MachineID: domain.NewMachineID(entity.MachineID.Hex()),
 		Address:   domain.NewAddress(entity.Address),
