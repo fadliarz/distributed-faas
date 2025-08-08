@@ -8,5 +8,4 @@ type Invocation struct {
 	OutputURL     OutputURL
 	Status        Status
 	Timestamp     Timestamp
-	IsRetry       IsRetry
 }

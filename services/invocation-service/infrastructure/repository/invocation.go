@@ -15,7 +15,6 @@ type InvocationEntity struct {
 	OutputURL     string             `bson:"output_url"`
 	Status        string             `bson:"status"`
 	Timestamp     int64              `bson:"timestamp"`
-	IsRetry       bool               `bson:"is_retry"`
 }
 
 // Mapper

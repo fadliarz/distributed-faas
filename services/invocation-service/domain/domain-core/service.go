@@ -24,30 +24,29 @@ func (s *InvocationDomainServiceImpl) ValidateAndInitiateInvocation(invocation *
 		return fmt.Errorf("source code URL must be empty for a new invocation, got: %s", invocation.SourceCodeURL)
 	}
 
-	if invocation.Timestamp != 0 {
-		return fmt.Errorf("timestamp must be zero for a new invocation, got: %d", invocation.Timestamp.Int64())
+	if invocation.Status != 0 {
+		return fmt.Errorf("status must be Unknown for a new invocation, got: %s", invocation.Status.String())
 	}
 
-	if invocation.IsRetry != false {
-		return fmt.Errorf("isRetry must be false for a new invocation, got: %t", invocation.IsRetry.Bool())
+	if invocation.Timestamp != 0 {
+		return fmt.Errorf("timestamp must be zero for a new invocation, got: %d", invocation.Timestamp.Int64())
 	}
 
 	if invocation.OutputURL != "" {
 		return fmt.Errorf("output URL must be empty for a new invocation, got: %s", invocation.OutputURL.String())
 	}
 
-	if invocation.Status != 0 {
-		return fmt.Errorf("status must be Unknown for a new invocation, got: %s", invocation.Status.String())
-	}
-
 	invocation.InvocationID = NewInvocationID(invocationID)
 	invocation.SourceCodeURL = function.SourceCodeURL
-	invocation.Status = NewStatus("PENDING")
+	invocation.Status = Pending
 	invocation.Timestamp = NewTimestamp(time.Now().Unix())
-	invocation.IsRetry = NewIsRetry(false)
 
 	if invocation.FunctionID == "" {
 		return fmt.Errorf("function ID cannot be empty for invocation: %s", invocation.InvocationID)
+	}
+
+	if invocation.UserID == "" {
+		return fmt.Errorf("user ID cannot be empty for invocation: %s", invocation.InvocationID)
 	}
 
 	return nil
