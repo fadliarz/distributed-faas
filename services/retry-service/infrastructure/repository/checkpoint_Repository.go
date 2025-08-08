@@ -18,10 +18,5 @@ func NewCheckpointRepository(repo *CheckpointMongoRepository) application.Checkp
 }
 
 func (c CheckpointRepositoryImpl) RetryInvocations(ctx context.Context, threshold domain.Threshold) error {
-	err := c.repo.RetryInvocations(ctx, threshold.Int64())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.repo.RetryInvocations(ctx, threshold.Int64())
 }

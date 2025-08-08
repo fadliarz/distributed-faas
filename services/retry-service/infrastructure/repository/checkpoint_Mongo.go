@@ -18,8 +18,16 @@ func NewCheckpointMongoRepository(collection *mongo.Collection) *CheckpointMongo
 }
 
 func (r *CheckpointMongoRepository) RetryInvocations(ctx context.Context, thresholdInSec int64) error {
-	filter := bson.M{"status": "PENDING", "timestamp": bson.M{"$lt": time.Now().Unix() - thresholdInSec}}
-	update := bson.M{"$set": bson.M{"threshold": time.Now().Unix(), "is_retry": true}}
+	filter := bson.M{
+		"status":    bson.M{"$ne": "SUCCESS"},
+		"timestamp": bson.M{"$lt": time.Now().Add(-time.Duration(thresholdInSec) * time.Second).Unix()},
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"status":    "RETRYING",
+			"timestamp": time.Now().Unix(),
+		},
+	}
 
 	result, err := r.collection.UpdateMany(ctx, filter, update)
 	if err != nil {

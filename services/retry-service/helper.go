@@ -34,8 +34,8 @@ func loadEnv() {
 // Dependencies
 
 type Dependencies struct {
-	configManager *ConfigManager
-	handler       *application.RetryHandler
+	ConfigManager *ConfigManager
+	Handler       *application.RetryHandler
 }
 
 type ConfigManager struct {
@@ -58,10 +58,10 @@ func setupDependencies(ctx context.Context) (*Dependencies, error) {
 	}
 
 	return &Dependencies{
-		configManager: &ConfigManager{
+		ConfigManager: &ConfigManager{
 			Retry: retryConfig,
 		},
-		handler: setupRetryHandler(repositoryManager),
+		Handler: setupRetryHandler(repositoryManager),
 	}, nil
 }
 

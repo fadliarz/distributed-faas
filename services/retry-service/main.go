@@ -28,9 +28,15 @@ func main() {
 
 				return
 			default:
-				dependencies.handler.RetryInvocations(ctx)
+				err := dependencies.Handler.RetryInvocations(ctx, dependencies.ConfigManager.Retry.ThresholdInSec)
 
-				time.Sleep(time.Duration(dependencies.configManager.Retry.RetryIntervalInSec) * time.Second)
+				if err != nil {
+					log.Error().Err(err).Msg("an error occured")
+				} else {
+					log.Info().Msg("retry invocations completed successfully")
+				}
+
+				time.Sleep(time.Duration(dependencies.ConfigManager.Retry.RetryIntervalInSec) * time.Second)
 			}
 		}
 	}()
