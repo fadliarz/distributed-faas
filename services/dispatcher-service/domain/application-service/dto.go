@@ -5,6 +5,6 @@ type InvocationCreatedEvent struct {
 	FunctionID    string `json:"function_id"`
 	UserID        string `json:"user_id"`
 	SourceCodeURL string `json:"source_code_url"`
+	Status        string `json:"status"`
 	Timestamp     int64  `json:"timestamp"`
-	IsRetry       bool   `json:"is_retry"`
 }

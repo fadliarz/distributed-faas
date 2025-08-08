@@ -93,8 +93,8 @@ func (h *InvocationEventHandler) executeInvocation(ctx context.Context, machine 
 		FunctionId:    event.FunctionID,
 		UserId:        event.UserID,
 		SourceCodeUrl: event.SourceCodeURL,
+		Status:        event.Status,
 		Timestamp:     event.Timestamp,
-		IsRetry:       event.IsRetry,
 	}
 
 	_, err = client.ExecuteFunction(ctx, request)
