@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -33,13 +32,9 @@ func (r *InvocationMongoRepository) UpdateOutputURLAndStatusToSuccessIfNotSet(ct
 
 	result, err := r.collection.UpdateOne(ctx, filter, update)
 
-	if err != nil {
-		return fmt.Errorf("failed to update invocation: %w", err)
-	}
-
-	if result.MatchedCount == 0 {
+	if result != nil && result.MatchedCount == 0 {
 		return nil
 	}
 
-	return nil
+	return err
 }

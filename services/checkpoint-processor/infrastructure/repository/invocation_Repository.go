@@ -25,10 +25,5 @@ func (r *InvocationRepository) UpdateOutputURLAndStatusToSuccessIfNotSet(ctx con
 		return fmt.Errorf("invalid invocation ID: %w", err)
 	}
 
-	err = r.repo.UpdateOutputURLAndStatusToSuccessIfNotSet(ctx, invocationIDPrimitive, outputURL)
-	if err != nil {
-		return fmt.Errorf("failed to update output URL: %w", err)
-	}
-
-	return nil
+	return r.repo.UpdateOutputURLAndStatusToSuccessIfNotSet(ctx, invocationIDPrimitive, outputURL)
 }
