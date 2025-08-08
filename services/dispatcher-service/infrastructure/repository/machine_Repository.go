@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/fadliarz/distributed-faas/services/dispatcher-service/domain/application-service"
 	"github.com/fadliarz/distributed-faas/services/dispatcher-service/domain/domain-core"
@@ -23,14 +22,10 @@ func NewMachineRepository(mapper MachineDataAccessMapper, repo *MachineMongoRepo
 func (r *MachineRepositoryImpl) FindManyByStatus(ctx context.Context, status domain.Status) ([]domain.Machine, error) {
 	machines, err := r.repo.FindManyByStatus(ctx, status.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to find machines by status: %w", err)
+		return nil, err
 	}
 
-	if machines == nil {
-		return []domain.Machine{}, nil
-	}
-
-	var result []domain.Machine
+	var result []domain.Machine = []domain.Machine{}
 	for _, machine := range machines {
 		result = append(result, *r.mapper.Domain(&machine))
 	}

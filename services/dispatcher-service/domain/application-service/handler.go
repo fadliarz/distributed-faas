@@ -52,7 +52,7 @@ func (h *InvocationEventHandler) HandleInvocationCreatedEvent(ctx context.Contex
 				log.Warn().Msgf("Found %d available machines, but still waiting for more to become available", len(machines))
 			}
 
-			log.Info().Msg("Pausing for 5 seconds before retrying to find available machines")
+			log.Debug().Msg("Pausing for 5 seconds before retrying to find available machines")
 
 			time.Sleep(5 * time.Second)
 		}
@@ -60,7 +60,7 @@ func (h *InvocationEventHandler) HandleInvocationCreatedEvent(ctx context.Contex
 		for i := 0; i < len(machines); i++ {
 			err = h.executeInvocation(ctx, machines[0], event)
 			if err == nil {
-				log.Info().Msgf("Invocation processed successfully on machine %s", machines[0].MachineID.String())
+				log.Debug().Msgf("Invocation processed successfully on machine %s", machines[0].MachineID.String())
 
 				return nil
 			}
@@ -77,17 +77,19 @@ func (h *InvocationEventHandler) HandleInvocationCreatedEvent(ctx context.Contex
 }
 
 func (h *InvocationEventHandler) executeInvocation(ctx context.Context, machine domain.Machine, event *InvocationCreatedEvent) error {
-	// Create a gRPC client
+	// Client
 	address := machine.Address.String()
+
 	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("failed to connect to machine service at %s: %w", address, err)
 	}
+
 	defer conn.Close()
 
 	client := machine_service_v1.NewMachineServiceClient(conn)
 
-	// Create the gRPC request and send the gRPC request
+	// Request
 	request := &machine_service_v1.ExecuteFunctionRequest{
 		InvocationId:  event.InvocationID,
 		FunctionId:    event.FunctionID,
@@ -97,9 +99,10 @@ func (h *InvocationEventHandler) executeInvocation(ctx context.Context, machine 
 		Timestamp:     event.Timestamp,
 	}
 
+	// Execute
 	_, err = client.ExecuteFunction(ctx, request)
 	if err != nil {
-		log.Error().Err(err).Msgf("Failed to execute function on machine %s", machine.MachineID.String())
+		log.Warn().Err(err).Msgf("Failed to execute function on machine %s", machine.MachineID.String())
 
 		return fmt.Errorf("failed to execute function on machine %s: %w", machine.MachineID.String(), err)
 	}

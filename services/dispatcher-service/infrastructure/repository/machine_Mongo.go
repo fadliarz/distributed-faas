@@ -19,13 +19,13 @@ func NewMachineMongoRepository(collection *mongo.Collection) *MachineMongoReposi
 }
 
 func (r *MachineMongoRepository) FindManyByStatus(ctx context.Context, status string) ([]MachineEntity, error) {
-	filter := bson.M{"status": status}
-	cursor, err := r.collection.Find(ctx, filter)
+	cursor, err := r.collection.Find(ctx, bson.M{"status": status})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find machines by status: %w", err)
 	}
 
 	defer cursor.Close(ctx)
+
 	var machines []MachineEntity
 	if err = cursor.All(ctx, &machines); err != nil {
 		return nil, fmt.Errorf("failed to decode machines: %w", err)
