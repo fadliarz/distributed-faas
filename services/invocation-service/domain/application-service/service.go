@@ -39,25 +39,21 @@ func NewInvocationApplicationServiceRepositoryManager(invocation InvocationRepos
 // Methods
 
 func (s *InvocationApplicationService) PersistInvocation(ctx context.Context, cmd *CreateInvocationCommand) (*domain.Invocation, error) {
-	// Authorize user
 	function, err := s.repositoryManager.Function.FindByUserIDAndFunctionID(ctx, domain.UserID(cmd.UserID), domain.FunctionID(cmd.FunctionID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find function: %w", err)
 	}
 
 	if function == nil {
-		return nil, domain.NewErrUserNotAuthorized(fmt.Errorf("user %s is not authorized to invoke function %s", cmd.UserID, cmd.FunctionID))
+		return nil, domain.NewErrUserNotAuthorized(err)
 	}
 
-	// Map the command
 	invocation := s.mapper.CreateInvocationCommandToInvocation(cmd)
 
-	// Validate and Initiate the invocation
 	if err := s.domainService.ValidateAndInitiateInvocation(invocation, primitive.NewObjectID().Hex(), function); err != nil {
 		return nil, fmt.Errorf("failed to validate and initiate invocation: %w", err)
 	}
 
-	// Save the invocation
 	_, err = s.repositoryManager.Invocation.Save(ctx, invocation)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save invocation: %w", err)
@@ -69,11 +65,11 @@ func (s *InvocationApplicationService) PersistInvocation(ctx context.Context, cm
 func (s *InvocationApplicationService) GetInvocation(ctx context.Context, query *GetInvocationQuery) (*domain.Invocation, error) {
 	invocation, err := s.repositoryManager.Invocation.FindByID(ctx, domain.InvocationID(query.InvocationID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to find invocation: %w", err)
+		return nil, err
 	}
 
 	if invocation == nil || invocation.UserID.String() != query.UserID {
-		return nil, domain.NewErrUserNotAuthorized(fmt.Errorf("invocation with ID %s not found", query.InvocationID))
+		return nil, domain.NewErrUserNotAuthorized(nil)
 	}
 
 	return invocation, nil

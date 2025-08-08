@@ -17,19 +17,9 @@ func NewCommandHandler(service *InvocationApplicationService) *CommandHandler {
 }
 
 func (h *CommandHandler) CreateInvocation(ctx context.Context, cmd *CreateInvocationCommand) (*domain.Invocation, error) {
-	invocation, err := h.service.PersistInvocation(ctx, cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	return invocation, nil
+	return h.service.PersistInvocation(ctx, cmd)
 }
 
 func (h *CommandHandler) GetInvocation(ctx context.Context, query *GetInvocationQuery) (*domain.Invocation, error) {
-	invocation, err := h.service.GetInvocation(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	return invocation, nil
+	return h.service.GetInvocation(ctx, query)
 }
