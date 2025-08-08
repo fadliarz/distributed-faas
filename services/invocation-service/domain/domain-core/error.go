@@ -13,14 +13,25 @@ var (
 )
 
 func NewErrFunctionNotFound(err error) error {
+	if err == nil {
+		return ErrFunctionNotFound
+	}
+
 	return fmt.Errorf("%w: %s", ErrFunctionNotFound, err.Error())
 }
 
 func NewErrFunctionAlreadyExists(err error) error {
+	if err == nil {
+		return ErrFunctionAlreadyExists
+	}
+
 	return fmt.Errorf("%w: %s", ErrFunctionAlreadyExists, err.Error())
 }
 
 func NewErrUserNotAuthorized(err error) error {
+	if err == nil {
+		return ErrUserNotAuthorized
+	}
+
 	return fmt.Errorf("%w: %s", ErrUserNotAuthorized, err.Error())
 }
-
