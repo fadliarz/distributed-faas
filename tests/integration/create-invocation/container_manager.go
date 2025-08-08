@@ -229,11 +229,6 @@ func (cm *ContainerManager) setupDebeziumConnectors() error {
 		return fmt.Errorf("failed to setup checkpoint Debezium connector: %w", err)
 	}
 
-	err = cm.setupCheckpointToInvocationDebeziumConnector()
-	if err != nil {
-		return fmt.Errorf("failed to setup checkpoint to invocation Debezium connector: %w", err)
-	}
-
 	return nil
 }
 
@@ -366,13 +361,17 @@ func (cm *ContainerManager) setupCheckpointDebeziumConnector() error {
 			"value.converter": "org.apache.kafka.connect.json.JsonConverter",
 			"value.converter.schemas.enable": false,
 			
-			"transforms": "unwrap,filter",
+			"transforms": "unwrap,filter,route",
 
 			"transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
 
 			"transforms.filter.type": "io.debezium.transforms.Filter",
 			"transforms.filter.language": "jsr223.groovy",
-			"transforms.filter.condition": "value.status == 'SUCCESS'"
+			"transforms.filter.condition": "value.status == 'RETRYING' || value.status == 'SUCCESS'",
+
+			"transforms.route.type": "io.debezium.transforms.ContentBasedRouter",
+			"transforms.route.language": "jsr223.groovy",
+			"transforms.route.topic.expression": "value.status == 'RETRYING' ? 'cdc.invocation-db.invocation' : null"
 		}
 	}`,
 		cm.config.DebeziumConfig.CheckpointConnectorName,
@@ -453,127 +452,6 @@ func (cm *ContainerManager) waitForCheckpointConnectorReady(endpoint string) err
 
 		if strings.Contains(string(body), `"state":"RUNNING"`) {
 			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointConnectorName)
-
-			return nil
-		}
-
-		time.Sleep(cm.config.DebeziumConfig.ReadyInterval)
-	}
-
-	return nil
-}
-
-func (cm *ContainerManager) setupCheckpointToInvocationDebeziumConnector() error {
-	// Set up the Debezium connector configuration
-	configJSON := fmt.Sprintf(`{
-		"name": "%s",
-		"config": {
-			"connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
-			"mongodb.connection.string": "%s",
-			"topic.prefix": "cdc",
-			"database.include.list": "%s",
-			"collection.include.list": "%s",
-
-			"key.converter": "org.apache.kafka.connect.json.JsonConverter",
-			"key.converter.schemas.enable": false,
-			"value.converter": "org.apache.kafka.connect.json.JsonConverter",
-			"value.converter.schemas.enable": false,
-
-			"transforms": "unwrap,filter,router",
-
-			"transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
-
-			"transforms.filter.type": "io.debezium.transforms.Filter",
-			"transforms.filter.language": "jsr223.groovy",
-			"transforms.filter.condition": "value.status == 'SUCCESS'",
-
-			"transforms.router.type": "io.debezium.transforms.ByLogicalTableRouter",
-			"transforms.router.topic.regex": "cdc\\.%s\\.%s",
-			"transforms.router.topic.replacement": "cdc\\.%s\\.%s"
-			}
-	}`,
-		cm.config.DebeziumConfig.CheckpointToInvocationConnectorName,
-		cm.config.GetMongoConnectionString(),
-		cm.config.MongoConfig.CheckpointDatabase,
-		fmt.Sprintf("%s\\\\.%s", cm.config.MongoConfig.CheckpointDatabase, cm.config.MongoConfig.CheckpointCollection),
-		cm.config.MongoConfig.CheckpointDatabase,
-		cm.config.MongoConfig.CheckpointCollection,
-		cm.config.MongoConfig.InvocationDatabase,
-		cm.config.MongoConfig.InvocationCollection,
-	)
-
-	endpoint := fmt.Sprintf("%s/connectors", cm.ConnectionStrings.Debezium)
-
-	for attempt := 1; attempt <= cm.config.DebeziumConfig.MaxRetries; attempt++ {
-		log.Debug().Msgf("[%s] Attempting to create Debezium connector (attempt %d/%d)", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt, cm.config.DebeziumConfig.MaxRetries)
-
-		// Create HTTP request
-		req, err := http.NewRequest("POST", endpoint, strings.NewReader(configJSON))
-		if err != nil {
-			return fmt.Errorf("[%s] failed to create HTTP request: %w", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		// Create HTTP client with timeout
-		client := &http.Client{Timeout: 10 * time.Second}
-
-		// Send HTTP request
-		res, err := client.Do(req)
-
-		// Handle response
-		if err != nil {
-			log.Error().Err(err).Msgf("[%s] Failed to create Debezium connector", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
-		}
-
-		if err == nil && res.StatusCode >= 200 && res.StatusCode < 300 {
-			log.Debug().Msgf("[%s] Debezium connector created successfully on attempt %d", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, attempt)
-
-			res.Body.Close()
-			return cm.waitForCheckpointToInvocationConnectorReady(fmt.Sprintf("%s/%s/status", endpoint, cm.config.DebeziumConfig.CheckpointToInvocationConnectorName))
-		}
-
-		if res != nil {
-			body := ""
-			if b, readErr := io.ReadAll(res.Body); readErr == nil {
-				body = string(b)
-			}
-			res.Body.Close()
-
-			log.Error().Msgf("[%s] Failed to create Debezium connector, status code: %d, response body: %s", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, res.StatusCode, body)
-		}
-
-		if attempt < cm.config.DebeziumConfig.MaxRetries {
-			time.Sleep(cm.config.DebeziumConfig.RetryInterval)
-		}
-	}
-
-	return fmt.Errorf("[%s] failed to create Debezium connector after %d attempts", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName, cm.config.DebeziumConfig.MaxRetries)
-}
-
-func (cm *ContainerManager) waitForCheckpointToInvocationConnectorReady(endpoint string) error {
-	deadline := time.Now().Add(cm.config.DebeziumConfig.ReadyTimeout)
-
-	for time.Now().Before(deadline) {
-		log.Debug().Msgf("[%s] Checking Debezium connector status", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
-
-		res, err := http.Get(endpoint)
-
-		if err != nil {
-			log.Error().Err(err).Msgf("[%s] Failed to get Debezium connector status", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
-
-			time.Sleep(cm.config.DebeziumConfig.ReadyInterval)
-		}
-
-		body, err := io.ReadAll(res.Body)
-		res.Body.Close()
-		if err != nil {
-			log.Error().Err(err).Msgf("[%s] Failed to read Debezium connector response body", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
-
-			time.Sleep(cm.config.DebeziumConfig.ReadyInterval)
-		}
-
-		if strings.Contains(string(body), `"state":"RUNNING"`) {
-			log.Debug().Msgf("[%s] Debezium connector is ready", cm.config.DebeziumConfig.CheckpointToInvocationConnectorName)
 
 			return nil
 		}
