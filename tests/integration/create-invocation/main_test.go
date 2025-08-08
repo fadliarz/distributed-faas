@@ -41,6 +41,17 @@ func (suite *CreateFunctionCDCIntegrationTest) TestInvocation_FunctionNotExists_
 	suite.assertionHelper.AssertInvocationUnauthorized(createInvocationResponse, err)
 }
 
+func (suite *CreateFunctionCDCIntegrationTest) TestInvocation_InvocationRetry_InvocationReprocessed() {
+	// Arrange
+	suite.arrangeHelper.RegisterMachine()
+
+	// Act
+	checkpointEntity := suite.arrangeHelper.CreateCheckpointInMongoDB(suite.mongoManager.Client)
+
+	// Assert
+	suite.assertionHelper.AssertCheckpointPersistedInMongoDB(suite.ctx, suite.mongoManager.Client, checkpointEntity.CheckpointID.Hex())
+}
+
 func TestCreateFunctionCDCIntegrationTest(t *testing.T) {
 	suite.Run(t, new(CreateFunctionCDCIntegrationTest))
 }

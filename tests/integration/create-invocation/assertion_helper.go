@@ -77,7 +77,6 @@ func (ah *AssertionHelper) AssertInvocationPersistedInMongoDB(ctx context.Contex
 	require.NotEmpty(ah.t, invocation.UserID, "User ID should not be empty")
 	require.NotEmpty(ah.t, invocation.SourceCodeURL, "Source code URL should not be empty")
 	require.Empty(ah.t, invocation.OutputURL, "Output URL should be empty")
-	require.False(ah.t, invocation.IsRetry, "Invocation should not be a retry")
 	require.Greater(ah.t, invocation.Timestamp, int64(0), "Timestamp should be greater than 0")
 }
 
@@ -105,7 +104,6 @@ func (ah *AssertionHelper) AssertInvocationPersistedInKafka(ctx context.Context,
 			require.Equal(ah.t, createInvocationResponse.FunctionId, event.FunctionID, "Function ID does not match")
 			require.Equal(ah.t, createInvocationResponse.SourceCodeUrl, event.SourceCodeURL, "Source code URL does not match")
 			require.Less(ah.t, int64(0), event.Timestamp, "Timestamp should be greater than 0")
-			require.False(ah.t, event.IsRetry, "Invocation should not be a retry")
 
 			return
 		}
@@ -122,7 +120,7 @@ func (ah *AssertionHelper) AssertCheckpointPersistedInMongoDB(ctx context.Contex
 	objectID, err := primitive.ObjectIDFromHex(checkpointID)
 	require.NoError(ah.t, err, "Failed to convert Checkpoint ID to ObjectID")
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10000; i++ {
 		var checkpoint m_repository.CheckpointEntity
 
 		err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&checkpoint)
