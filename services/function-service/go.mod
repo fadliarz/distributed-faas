@@ -6,7 +6,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.37.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.85.1
 	github.com/fadliarz/distributed-faas/services/invocation-service v0.0.0-20250801030505-1be3a6973e42
-	github.com/fadliarz/distributed-faas/services/registrar-service v0.0.0-20250801030505-1be3a6973e42
 	github.com/golang/protobuf v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.34.0
