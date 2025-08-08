@@ -8,6 +8,7 @@ import (
 	invocation_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/invocation-service/v1"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -83,7 +84,6 @@ func (h *ArrangeHelper) CreateInvocation(userID string, functionID string) (*inv
 
 	response, err := client.CreateInvocation(h.t.Context(), &req)
 
-
 	return response, err
 }
 
@@ -107,4 +107,16 @@ func (h *ArrangeHelper) RegisterMachine() *registrar_service_v1.RegisterMachineR
 	require.Equal(h.t, h.config.RequestDtos.MachineAddress, response.GetAddress(), "Machine address should match the request")
 
 	return response
+}
+
+func (h *ArrangeHelper) CreateCheckpointInMongoDB(client *mongo.Client) *CheckpointEntity {
+
+	collection := client.Database(h.config.MongoConfig.CheckpointDatabase).Collection(h.config.MongoConfig.CheckpointCollection)
+
+	checkpointEntity := NewRandomCheckpointEntity()
+	_, err := collection.InsertOne(h.t.Context(), checkpointEntity)
+
+	require.NoError(h.t, err, "Failed to create checkpoint in MongoDB")
+
+	return checkpointEntity
 }
