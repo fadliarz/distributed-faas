@@ -13,8 +13,8 @@ func (s *MachineDomainServiceImpl) ValidateAndInitiateCheckpoint(checkpoint *Che
 		return fmt.Errorf("checkpoint cannot be nil")
 	}
 
-	if checkpoint.Status != 0 {
-		return fmt.Errorf("checkpoint status must be zero (uninitialized)")
+	if checkpoint.Status != Pending {
+		return fmt.Errorf("checkpoint status must be 'Pending' for a new checkpoint")
 	}
 
 	if checkpoint.OutputURL.String() != "" {
