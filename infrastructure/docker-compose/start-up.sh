@@ -108,7 +108,7 @@ done
 curl --location --request POST 'localhost:8083/connectors' \
 --header 'Content-Type: application/json' \
 --data-raw '{
-    "name": "checkpoint-cdc-1",
+    "name": "checkpoint-cdc",
     "config": {
         "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
         "mongodb.connection.string": "mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true",
@@ -120,63 +120,28 @@ curl --location --request POST 'localhost:8083/connectors' \
         "key.converter.schemas.enable": false,
         "value.converter": "org.apache.kafka.connect.json.JsonConverter",
         "value.converter.schemas.enable": false,
-
-        "transforms": "unwrap,filter",
-
-        "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
-
-        "transforms.filter.type": "io.debezium.transforms.Filter",
-        "transforms.filter.language": "jsr223.groovy",
-        "transforms.filter.condition": "value.status == 'SUCCESS'"
-    }
-}'
-
-connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc-1/status')
-
-while [[ ! "$connectorCheckResult" == *'"state":"RUNNING"'* ]]; do
-    >&2 echo "Connector (checkpoint-cdc-1) is not running yet, waiting for it to start, connector check result: $connectorCheckResult"
-    sleep 2
-    connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc-1/status')
-done
-
-curl --location --request POST 'localhost:8083/connectors' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "name": "checkpoint-cdc-2",
-    "config": {
-        "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
-        "mongodb.connection.string": "mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true",
-        "topic.prefix": "cdc",
-        "database.include.list": "checkpoint-db",
-        "collection.include.list": "checkpoint-db.checkpoint",
-
-        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
-        "key.converter.schemas.enable": false,
-        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-        "value.converter.schemas.enable": false,
-
-        "transforms": "unwrap,filter,router",
+			
+        "transforms": "unwrap,filter,route",
 
         "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState",
 
         "transforms.filter.type": "io.debezium.transforms.Filter",
         "transforms.filter.language": "jsr223.groovy",
-        "transforms.filter.condition": "value.status == 'SUCCESS'",
+        "transforms.filter.condition": "value.status == 'RETRYING' || value.status == 'SUCCESS'",
 
-        "transforms.router.type": "io.debezium.transforms.ByLogicalTableRouter",
-        "transforms.router.topic.regex": "cdc\\.checkpoint-db\\.checkpoint",
-        "transforms.router.topic.replacement": "cdc\\.invocation-db\\.invocation"
+        "transforms.route.type": "io.debezium.transforms.ContentBasedRouter",
+        "transforms.route.language": "jsr223.groovy",
+        "transforms.route.topic.expression": "value.status == 'RETRYING' ? 'cdc.invocation-db.invocation' : null"
     }
 }'
 
-connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc-2/status')
+connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc/status')
 
 while [[ ! "$connectorCheckResult" == *'"state":"RUNNING"'* ]]; do
-    >&2 echo "Connector (checkpoint-cdc-2) is not running yet, waiting for it to start, connector check result: $connectorCheckResult"
+    >&2 echo "Connector (checkpoint-cdc) is not running yet, waiting for it to start, connector check result: $connectorCheckResult"
     sleep 2
-    connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc-2/status')
+    connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc/status')
 done
-
 
 #
 #
