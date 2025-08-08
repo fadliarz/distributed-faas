@@ -13,8 +13,8 @@ message ExecuteFunctionRequest {
   string function_id = 2;
   string user_id = 3;
   string source_code_url = 4;
-  int64 timestamp = 5;
-  bool is_retry = 6;
+  string status = 5;
+  int64 timestamp = 6;
 }
 
 message ExecuteFunctionResponse {
