@@ -5,6 +5,7 @@ go 1.24.4
 require (
 	github.com/fadliarz/distributed-faas/common v0.0.0-20250810034045-923db141c488
 	github.com/golang/protobuf v1.5.4
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.34.0
 	go.mongodb.org/mongo-driver v1.17.4
 	google.golang.org/grpc v1.74.2
