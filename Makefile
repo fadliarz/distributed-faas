@@ -1,6 +1,17 @@
 .PHONY: all compile clean generate-mocks
 
-# Compile Protobuf definitions for services
+#
+# PROTO GEN
+#
+
+gen-proto:
+	make gen-tests-integration
+	make gen-function-service
+	make gen-invocation-service
+	make gen-dispatcher-service
+	make gen-machine
+	make gen-registrar-service
+	make gen-user-service
 
 gen-tests-integration:
 	@echo "Compiling Protobuf definitions for integration tests..."
@@ -28,19 +39,14 @@ gen-tests-integration:
 	--go-grpc_opt=paths=source_relative \
 	./proto/registrar-service/v1/api.proto
 
+	protoc --proto_path=./proto \
+	--go_out=./tests/integration/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./tests/integration/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/user-service/v1/api.proto
+
 	@echo "Protobuf compilation complete."
-
-#
-# PROTO GEN
-#
-
-gen-proto:
-	make gen-function-service
-	make gen-invocation-service
-	make gen-dispatcher-service
-	make gen-machine
-	make gen-registrar-service
-	make gen-user-service
 
 gen-function-service:
 	@echo "Compiling Protobuf definitions for function service..."
@@ -125,6 +131,8 @@ gen-user-service:
 	./proto/user-service/v1/api.proto
 
 	@echo "Protobuf compilation complete."
+
+
 
 #
 # Test
