@@ -4,8 +4,13 @@ go 1.24.4
 
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.11.0
+	github.com/fadliarz/distributed-faas/services/dispatcher-service v0.0.0-20250810090201-9d907bffec46
 	github.com/fadliarz/distributed-faas/services/function-service v0.0.0-00010101000000-000000000000
 	github.com/fadliarz/distributed-faas/services/invocation-service v0.0.0-20250801030505-1be3a6973e42
+	github.com/fadliarz/distributed-faas/services/machine v0.0.0-20250810090201-9d907bffec46
+	github.com/fadliarz/distributed-faas/services/registrar-service v0.0.0-20250810090201-9d907bffec46
+	github.com/fadliarz/distributed-faas/services/user-processor v0.0.0-20250810090201-9d907bffec46
+	github.com/fadliarz/distributed-faas/services/user-service v0.0.0-20250810090201-9d907bffec46
 	github.com/golang/protobuf v1.5.4
 	github.com/google/uuid v1.6.0
 	github.com/rs/zerolog v1.34.0
@@ -28,14 +33,19 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.37.1 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.29.17 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.85.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0 // indirect
