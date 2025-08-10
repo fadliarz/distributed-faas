@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.user_service.v1;
+
+option go_package =  "github.com/fadliarz/distributed-faas/services/user-service/v1;user_service_v1";
+
+service UserService{
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+}
+
+message CreateUserRequest {
+    string password = 1;
+}
+
+message CreateUserResponse {
+    string user_id = 1;
+}
+

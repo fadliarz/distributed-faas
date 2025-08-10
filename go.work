@@ -10,5 +10,6 @@ use (
 	./services/machine
 	./services/registrar-service
 	./services/retry-service
+	./services/user-service
 	./tests/integration
 )

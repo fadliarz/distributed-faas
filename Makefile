@@ -40,6 +40,7 @@ gen-proto:
 	make gen-dispatcher-service
 	make gen-machine
 	make gen-registrar-service
+	make gen-user-service
 
 gen-function-service:
 	@echo "Compiling Protobuf definitions for function service..."
@@ -108,6 +109,20 @@ gen-registrar-service:
 	--go-grpc_out=./services/registrar-service/gen/go \
 	--go-grpc_opt=paths=source_relative \
 	./proto/registrar-service/v1/api.proto
+
+	@echo "Protobuf compilation complete."
+
+gen-user-service:
+	@echo "Compiling Protobuf definitions for user service..."
+
+	mkdir -p ./services/user-service/gen/go
+
+	protoc --proto_path=./proto \
+	--go_out=./services/user-service/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./services/user-service/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/user-service/v1/api.proto
 
 	@echo "Protobuf compilation complete."
 
