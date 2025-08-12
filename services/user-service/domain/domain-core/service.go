@@ -13,8 +13,8 @@ func NewUserDomainService() UserDomainService {
 }
 
 func (u *UserDomainServiceImpl) ValidateAndInitiateUser(user *User, userID valueobject.UserID) error {
-	if user.UserID.String() == "" {
-		return fmt.Errorf("user ID cannot be empty")
+	if user.UserID.String() != "" {
+		return fmt.Errorf("user ID must be empty")
 	}
 
 	user.UserID = userID
