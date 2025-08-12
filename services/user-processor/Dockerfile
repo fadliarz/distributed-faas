@@ -1,32 +1,43 @@
-FROM golang:1.24-alpine AS builder
+# Use a Debian-based Go image which uses glibc
+FROM golang:1.24.4-bookworm AS builder
 
-WORKDIR /app
+# Install build tools. Debian uses apt-get.
+# libc6-dev provides the C standard library development files.
+RUN apt-get update && apt-get install -y gcc libc6-dev
 
-# Copy go.mod and go.sum first for dependency caching
-COPY go.work go.work.sum ./
-COPY common/go.mod common/go.sum ./common/
-COPY infrastructure/kafka/go.mod infrastructure/kafka/go.sum ./infrastructure/kafka/
-COPY services/user-processor/go.mod services/user-processor/go.sum ./services/user-processor/
+# Create the directory structure to match the replace directive (../../common)
+WORKDIR /app/services/user-processor
+
+# Copy go mod files
+COPY services/user-processor/go.mod services/user-processor/go.sum ./
+
+# Copy the common module (needed for local replacement) to the correct relative path
+COPY common/ ../../common/
+
+# Copy the infrastructure module (needed for local replacement) to the correct relative path
+COPY infrastructure/kafka ../../infrastructure/kafka/
 
 # Download dependencies
-RUN go work sync
 RUN go mod download
 
 # Copy source code
-COPY common/ ./common/
-COPY infrastructure/kafka/ ./infrastructure/kafka/
-COPY services/user-processor/ ./services/user-processor/
+COPY services/user-processor/ .
 
 # Build the application
-WORKDIR /app/services/user-processor
-RUN go build -o main .
+# The pre-compiled librdkafka library expects a glibc environment, which this image provides.
+RUN CGO_ENABLED=1 GOOS=linux go build -a -installsuffix cgo -o main .
 
-FROM alpine:latest
+# Final stage
+# Use a slim Debian image for a smaller final container
+FROM debian:bookworm-slim
 
-RUN apk --no-cache add ca-certificates tzdata
+# Install ca-certificates for making HTTPS requests
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root/
 
+# Copy the binary from builder stage
 COPY --from=builder /app/services/user-processor/main .
 
+# Run the binary
 CMD ["./main"]
