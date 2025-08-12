@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/fadliarz/distributed-faas/services/user-processor/domain/application-service"
 	up_repository "github.com/fadliarz/distributed-faas/services/user-processor/infrastructure/repository"
 	us_repository "github.com/fadliarz/distributed-faas/services/user-service/infrastructure/repository"
 	user_service_v1 "github.com/fadliarz/distributed-faas/tests/integration/gen/go/user-service/v1"
@@ -49,29 +50,36 @@ func (ah *AssertionHelper) AssertUserPersistedInMongoDB(ctx context.Context, cli
 }
 
 func (ah *AssertionHelper) AssertUserPersistedInKafka(ctx context.Context, consumer *kafka.Consumer, createUserResponse *user_service_v1.CreateUserResponse) {
-	timeout := time.NewTimer(ah.config.KafkaConfig.Timeout)
-	defer timeout.Stop()
+	deadline := time.Now().Add(120 * time.Second)
 
-	for {
-		select {
-		case <-timeout.C:
-			ah.t.Fatal("Timeout waiting for user event in Kafka")
-		default:
-			message, err := consumer.ReadMessage(1 * time.Second)
-			if err != nil {
+	for time.Now().Before(deadline) {
+		msg, err := consumer.ReadMessage(3 * time.Second)
+		if err != nil {
+			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
+				log.Debug().Msg("[AssertUserPersistedInKafka] No message received from Kafka within the timeout period, retrying...")
+
 				continue
 			}
 
-			var userEvent UserEvent
-			err = json.Unmarshal(message.Value, &userEvent)
-			require.NoError(ah.t, err, "Failed to unmarshal user event")
+			require.NoError(ah.t, err, "Failed to read message from Kafka")
+		}
 
-			if userEvent.After != nil && userEvent.After.UserID == createUserResponse.UserId {
-				log.Info().Msgf("User event found in Kafka: %s", createUserResponse.UserId)
-				return
+		if msg != nil && len(msg.Value) > 0 {
+			var event application.UserEvent
+			err := json.Unmarshal(msg.Value, &event)
+			if err != nil {
+				log.Debug().Err(err).Msg("[AssertUserPersistedInKafka] Failed to unmarshal Kafka message")
+
+				continue
 			}
+
+			require.Equal(ah.t, createUserResponse.UserId, event.UserID, "User ID does not match")
+
+			return
 		}
 	}
+
+	require.Fail(ah.t, "No message received from Kafka within the timeout period")
 }
 
 func (ah *AssertionHelper) AssertCronJobPersistedInMongoDB(ctx context.Context, client *mongo.Client, userID string) {
