@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.charge_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/charge-service/gen/go/v1;charge_service_v1";
+
+service ChargeService {
+    rpc CreateCharge(CreateChargeRequest) returns (CreateChargeResponse);
+
+}
+
+message CreateChargeRequest {
+    string user_id = 1;
+    string service_id = 2;
+    int64 amount = 3;
+}
+
+message CreateChargeResponse {
+    string status = 1;
+    string message = 2;
+}

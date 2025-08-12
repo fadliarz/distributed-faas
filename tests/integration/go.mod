@@ -5,7 +5,6 @@ go 1.24.4
 require (
 	github.com/confluentinc/confluent-kafka-go/v2 v2.11.0
 	github.com/fadliarz/distributed-faas/services/dispatcher-service v0.0.0-20250810090201-9d907bffec46
-	github.com/fadliarz/distributed-faas/services/function-service v0.0.0-00010101000000-000000000000
 	github.com/fadliarz/distributed-faas/services/invocation-service v0.0.0-20250801030505-1be3a6973e42
 	github.com/fadliarz/distributed-faas/services/machine v0.0.0-20250810090201-9d907bffec46
 	github.com/fadliarz/distributed-faas/services/registrar-service v0.0.0-20250810090201-9d907bffec46

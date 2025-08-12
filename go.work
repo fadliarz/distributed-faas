@@ -3,6 +3,7 @@ go 1.24.4
 use (
 	./common
 	./infrastructure/kafka
+	./services/charge-service
 	./services/checkpoint-processor
 	./services/dispatcher-service
 	./services/function-service

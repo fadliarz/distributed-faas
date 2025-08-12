@@ -145,11 +145,6 @@ gen-charge-service:
 	--go-grpc_opt=paths=source_relative \
 	./proto/charge-service/v1/api.proto
 
-	protoc --proto_path=./proto \
-	--go_out=./services/charge-service/gen/go \
-	--go_opt=paths=source_relative \
-	./proto/charge-aggregate/v1/charge_aggregate.proto
-
 	@echo "Protobuf compilation complete."
 
 #
