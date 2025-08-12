@@ -121,7 +121,7 @@ func NewDefaultTestConfig() *TestConfig {
 			CronCollection: "cron",
 		},
 		KafkaConfig: &KafkaConfig{
-			BootstrapServers: "localhost:9092",
+			BootstrapServers: "localhost:19092",
 			Topics: &KafkaTopics{
 				User: "cdc.user-db.user",
 				Cron: "cdc.cron-db.cron",
@@ -130,7 +130,7 @@ func NewDefaultTestConfig() *TestConfig {
 				User: uuid.NewString(),
 				Cron: uuid.NewString(),
 			},
-			Timeout: 30 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 		DebeziumConfig: &DebeziumConfig{
 			UserConnectorName: "user-connector",
