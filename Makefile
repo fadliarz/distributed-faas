@@ -12,6 +12,7 @@ gen-proto:
 	make gen-machine
 	make gen-registrar-service
 	make gen-user-service
+	make gen-charge-service
 
 gen-tests-integration:
 	@echo "Compiling Protobuf definitions for integration tests..."
@@ -132,7 +133,24 @@ gen-user-service:
 
 	@echo "Protobuf compilation complete."
 
+gen-charge-service:
+	@echo "Compiling Protobuf definitions for charge service..."
 
+	mkdir -p ./services/charge-service/gen/go
+
+	protoc --proto_path=./proto \
+	--go_out=./services/charge-service/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./services/charge-service/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/charge-service/v1/api.proto
+
+	protoc --proto_path=./proto \
+	--go_out=./services/charge-service/gen/go \
+	--go_opt=paths=source_relative \
+	./proto/charge-aggregate/v1/charge_aggregate.proto
+
+	@echo "Protobuf compilation complete."
 
 #
 # Test
