@@ -176,8 +176,12 @@ test-create-invocation-verbose:
 
 	go test -v ./tests/integration/create-invocation
 
-test-create-invocation-TestInvocation_InvocationRetry_InvocationReprocessed:
-	@echo "Running integration tests for CDC function with retry and reprocessing"
+test-create-user-verbose:
+	@echo "Running integration tests for Create User"
+
+	@echo "Removing existing Docker images..."
+	-docker rmi distributed-faas-distributed-faas-user-processor:latest 2>/dev/null || true
+	-docker rmi distributed-faas-distributed-faas-user-service:latest 2>/dev/null || true
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
@@ -193,23 +197,5 @@ test-create-invocation-TestInvocation_InvocationRetry_InvocationReprocessed:
 
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
-	go test -run TestInvocation_InvocationRetry_InvocationReprocessed ./tests/integration/create-invocation
+	go test -v ./tests/integration/create-user
 
-test-create-invocation-TestInvocation_InvocationRetry_InvocationReprocessed-verbose:
-	@echo "Running integration tests for CDC function with retry and reprocessing"
-
-	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
-
-	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/data
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/transactions
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/broker-1
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/dlq-1
-
-	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
-
-	go test -run TestInvocation_InvocationRetry_InvocationReprocessed -v ./tests/integration/create-invocation
