@@ -57,8 +57,18 @@ show-topics:
 
 count-messages: 
 	@echo "Counting messages in Kafka topics..."
+	
 	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.invocation-db.invocation
+	
 	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.checkpoint-db.checkpoint
+	
+	@echo "Message count in Kafka topics complete."
+
+test-create-user-count-messages:	
+	@echo "Counting messages in Kafka topics..."
+
+	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOfsetShell --broker-list localhost:9092 --topic cdc.user-db.user
+
 	@echo "Message count in Kafka topics complete."
 
 # Execute related commands
