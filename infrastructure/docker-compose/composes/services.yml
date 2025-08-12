@@ -14,6 +14,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
+    profiles:
+      - test-create-invocation
 
   distributed-faas-invocation-service:
     container_name: distributed-faas-invocation-service
@@ -33,6 +35,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
+    profiles:
+      - test-create-invocation
 
   distributed-faas-dispatcher-service:
     container_name: distributed-faas-dispatcher-service
@@ -52,6 +56,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
     restart: always
+    profiles:
+      - test-create-invocation
 
   distributed-faas-machine:
     container_name: distributed-faas-machine
@@ -74,6 +80,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
     restart: always
+    profiles:
+      - test-create-invocation
   
   distributed-faas-checkpoint-processor:
     container_name: distributed-faas-checkpoint-processor
@@ -93,6 +101,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
     restart: always
+    profiles:
+      - test-create-invocation
 
   distributed-faas-registrar-service:
     container_name: distributed-faas-registrar-service
@@ -109,6 +119,8 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
+    profiles:
+      - test-create-invocation
 
   distributed-faas-retry-service:
     container_name: distributed-faas-retry-service
@@ -124,3 +136,41 @@ services:
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas} 
     restart: always
+    profiles:
+      - test-create-invocation
+
+  distributed-faas-user-service:
+    container_name: distributed-faas-user-service
+    build:
+      context: ../../../
+      dockerfile: services/user-service/Dockerfile
+    ports:
+      - 50058:50058
+    environment:
+      PORT: 50058
+      USER_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      USER_MONGO_DATABASE: user-db
+      USER_MONGO_COLLECTION: user
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas} 
+    restart: always
+    profiles:
+      - test-create-user
+
+  distributed-faas-user-processor:
+    container_name: distributed-faas-user-processor
+    build:
+      context: ../../../
+      dockerfile: services/user-processor/Dockerfile
+    environment:
+      CRON_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CRON_MONGO_DATABASE: cron-db
+      CRON_MONGO_COLLECTION: cron
+      USER_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
+      USER_KAFKA_TOPIC: cdc.user-db.user
+      USER_KAFKA_GROUP_ID: group-1
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-create-user
