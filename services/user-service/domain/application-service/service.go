@@ -44,6 +44,9 @@ func (s *UserApplicationServiceImpl) PersistsUser(ctx context.Context, command *
 	}
 
 	err = s.domainService.ValidateAndInitiateUser(user, valueobject.NewUserID(primitive.NewObjectID().Hex()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate and initiate user: %w", err)
+	}
 
 	_, err = s.repositoryManager.User.Save(ctx, user)
 	if err != nil {
