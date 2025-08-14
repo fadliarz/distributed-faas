@@ -47,6 +47,13 @@ gen-tests-integration:
 	--go-grpc_opt=paths=source_relative \
 	./proto/user-service/v1/api.proto
 
+	protoc --proto_path=./proto \
+	--go_out=./tests/integration/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./tests/integration/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/charge-service/v1/api.proto
+
 	@echo "Protobuf compilation complete."
 
 gen-function-service:
