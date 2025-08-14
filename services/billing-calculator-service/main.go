@@ -8,6 +8,7 @@ import (
 
 func main() {
 	config := &Config{}
+
 	loadEnv(config)
 
 	ctx, cancel := context.WithCancel(context.Background())
