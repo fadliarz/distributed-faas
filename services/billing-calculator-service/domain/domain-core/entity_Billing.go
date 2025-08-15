@@ -5,7 +5,8 @@ import (
 )
 
 type Billing struct {
-	BillingID valueobject.BillingID
-	UserID    valueobject.UserID
-	Amount    valueobject.Amount
+	BillingID  valueobject.BillingID
+	UserID     valueobject.UserID
+	LastBilled valueobject.LastBilled
+	Amount     valueobject.Amount
 }

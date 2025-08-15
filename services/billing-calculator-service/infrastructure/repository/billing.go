@@ -8,9 +8,10 @@ import (
 // Entity
 
 type BillingEntity struct {
-	BillingID primitive.ObjectID `bson:"_id,omitempty"`
-	UserID    string             `bson:"user_id"`
-	Amount    int64              `bson:"amount"`
+	BillingID  primitive.ObjectID `bson:"_id,omitempty"`
+	UserID     string             `bson:"user_id"`
+	LastBilled int64              `bson:"last_billed"`
+	Amount     int64              `bson:"amount"`
 }
 
 // Interfaces

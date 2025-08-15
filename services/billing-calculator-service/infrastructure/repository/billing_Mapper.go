@@ -25,9 +25,10 @@ func (m *BillingDataAccessMapperImpl) Entity(billing *domain.Billing) (*BillingE
 	}
 
 	return &BillingEntity{
-		BillingID: billingID,
-		UserID:    billing.UserID.String(),
-		Amount:    billing.Amount.Int64(),
+		BillingID:  billingID,
+		UserID:     billing.UserID.String(),
+		LastBilled: billing.LastBilled.Int64(),
+		Amount:     billing.Amount.Int64(),
 	}, nil
 }
 
@@ -37,8 +38,9 @@ func (m *BillingDataAccessMapperImpl) Domain(entity *BillingEntity) *domain.Bill
 	}
 
 	return &domain.Billing{
-		BillingID: valueobject.NewBillingID(entity.BillingID.Hex()),
-		UserID:    valueobject.NewUserID(entity.UserID),
-		Amount:    valueobject.NewAmount(entity.Amount),
+		BillingID:  valueobject.NewBillingID(entity.BillingID.Hex()),
+		UserID:     valueobject.NewUserID(entity.UserID),
+		LastBilled: valueobject.NewLastBilled(entity.LastBilled),
+		Amount:     valueobject.NewAmount(entity.Amount),
 	}
 }

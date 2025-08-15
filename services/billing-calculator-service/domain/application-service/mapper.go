@@ -13,6 +13,7 @@ func NewBillingCalculatorDataMapper() BillingCalculatorDataMapper {
 
 func (m *BillingCalculatorDataMapperImpl) BillingCalculationEventToBilling(event *BillingCalculationEvent) *domain.Billing {
 	return &domain.Billing{
-		UserID: valueobject.NewUserID(event.UserID),
+		UserID:     valueobject.NewUserID(event.UserID),
+		LastBilled: valueobject.NewLastBilled(event.LastBilled),
 	}
 }
