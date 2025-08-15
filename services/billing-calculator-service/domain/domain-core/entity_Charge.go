@@ -6,17 +6,17 @@ import (
 
 // Charge represents a charge record for billing calculation
 type Charge struct {
-	ChargeID  valueobject.ChargeID
-	UserID    valueobject.UserID
-	ServiceID valueobject.ServiceID
-	Amount    valueobject.Amount
+	ChargeID          valueobject.ChargeID
+	UserID            valueobject.UserID
+	ServiceID         valueobject.ServiceID
+	AccumulatedAmount valueobject.Amount
 }
 
-func NewCharge(chargeID valueobject.ChargeID, userID valueobject.UserID, serviceID valueobject.ServiceID, amount valueobject.Amount) *Charge {
+func NewCharge(chargeID valueobject.ChargeID, userID valueobject.UserID, serviceID valueobject.ServiceID, accumulatedAmount valueobject.Amount) *Charge {
 	return &Charge{
-		ChargeID:  chargeID,
-		UserID:    userID,
-		ServiceID: serviceID,
-		Amount:    amount,
+		ChargeID:          chargeID,
+		UserID:            userID,
+		ServiceID:         serviceID,
+		AccumulatedAmount: accumulatedAmount,
 	}
 }

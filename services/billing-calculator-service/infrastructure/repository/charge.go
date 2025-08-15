@@ -8,10 +8,10 @@ import (
 // Entity
 
 type ChargeEntity struct {
-	ChargeID  primitive.ObjectID `bson:"_id,omitempty"`
-	UserID    string             `bson:"user_id"`
-	ServiceID string             `bson:"service_id"`
-	Amount    int64              `bson:"amount"`
+	ChargeID          primitive.ObjectID `bson:"_id,omitempty"`
+	UserID            string             `bson:"user_id"`
+	ServiceID         string             `bson:"service_id"`
+	AccumulatedAmount int64              `bson:"accumulated_amount"`
 }
 
 // Interfaces

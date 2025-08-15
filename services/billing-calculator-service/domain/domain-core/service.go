@@ -16,7 +16,7 @@ func (s *BillingCalculatorDomainServiceImpl) CalculateBilling(billing *Billing, 
 	// Calculate total amount
 	totalAmount := valueobject.NewAmount(0)
 	for _, charge := range charges {
-		totalAmount = totalAmount.Add(charge.Amount)
+		totalAmount = totalAmount.Add(charge.AccumulatedAmount)
 	}
 
 	billing.Amount = totalAmount

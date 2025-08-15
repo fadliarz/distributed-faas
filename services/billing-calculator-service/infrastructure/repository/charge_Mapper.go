@@ -25,10 +25,10 @@ func (m *ChargeDataAccessMapperImpl) Entity(charge *domain.Charge) (*ChargeEntit
 	}
 
 	return &ChargeEntity{
-		ChargeID:  chargeID,
-		UserID:    charge.UserID.String(),
-		ServiceID: charge.ServiceID.String(),
-		Amount:    charge.Amount.Int64(),
+		ChargeID:          chargeID,
+		UserID:            charge.UserID.String(),
+		ServiceID:         charge.ServiceID.String(),
+		AccumulatedAmount: charge.AccumulatedAmount.Int64(),
 	}, nil
 }
 
@@ -41,6 +41,6 @@ func (m *ChargeDataAccessMapperImpl) Domain(entity *ChargeEntity) *domain.Charge
 		valueobject.NewChargeID(entity.ChargeID.Hex()),
 		valueobject.NewUserID(entity.UserID),
 		valueobject.NewServiceID(entity.ServiceID),
-		valueobject.NewAmount(entity.Amount),
+		valueobject.NewAmount(entity.AccumulatedAmount),
 	)
 }
