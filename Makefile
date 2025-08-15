@@ -219,3 +219,25 @@ test-create-user-verbose:
 
 	go test -v ./tests/integration/create-user
 
+test-create-charge-verbose:
+	@echo "Running integration tests for Create Charge"
+
+	@echo "Removing existing Docker images..."
+	-docker rmi distributed-faas-distributed-faas-charge-service:latest 2>/dev/null || true
+	-docker rmi distributed-faas-distributed-faas-accumulator-service:latest 2>/dev/null || true
+
+	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
+
+	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/data
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/transactions
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/broker-1
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/dlq-1
+
+	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
+
+	go test -v ./tests/integration/create-charge
