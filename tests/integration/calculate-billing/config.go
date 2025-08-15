@@ -26,8 +26,9 @@ type ComposePaths struct {
 }
 
 type ContainerNames struct {
-	Mongo string
-	Kafka string
+	Mongo          string
+	Kafka          string
+	BillingService string
 }
 
 type ComposeConfig struct {
@@ -78,8 +79,9 @@ func NewDefaultTestConfig() *TestConfig {
 			Services:  "/home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml",
 		},
 		ContainerNames: &ContainerNames{
-			Mongo: "distributed-faas-mongo",
-			Kafka: "distributed-faas-kafka-broker-1",
+			Mongo:          "distributed-faas-mongo",
+			Kafka:          "distributed-faas-kafka-broker-1",
+			BillingService: "distributed-faas-billing-service",
 		},
 		ComposeConfig: &ComposeConfig{
 			ProjectID: "distributed-faas",

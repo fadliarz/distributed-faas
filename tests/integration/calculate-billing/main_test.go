@@ -70,9 +70,11 @@ func (suite *CalculateBillingIntegrationTest) TestBillingCalculated() {
 	err = suite.arrangeHelper.CreateCronEvents(suite.ctx, suite.kafkaManager.Producers.Cron, events)
 	require.NoError(suite.T(), err, "Failed to create cron events")
 
-	// Assert
+	// Asser
 	suite.assertionHelper.AssertBillingPersistedInMongoDB(suite.ctx, suite.mongoManager.Client, userID1, accumulatedAmount*2)
 	suite.assertionHelper.AssertBillingPersistedInMongoDB(suite.ctx, suite.mongoManager.Client, userID2, accumulatedAmount*2)
+	suite.assertionHelper.AssertGetBillingSuccessfully(suite.ctx, suite.containerManager.ConnectionStrings.BillingService, userID1, lastBilled, accumulatedAmount*2)
+	suite.assertionHelper.AssertGetBillingSuccessfully(suite.ctx, suite.containerManager.ConnectionStrings.BillingService, userID2, lastBilled, accumulatedAmount*2)
 }
 
 func TestCalculatedBillingIntegrationTest(t *testing.T) {
