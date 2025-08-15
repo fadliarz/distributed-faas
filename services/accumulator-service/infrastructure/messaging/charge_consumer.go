@@ -16,11 +16,11 @@ import (
 
 type ChargeConsumerImpl struct {
 	consumer     *kafka.Consumer
-	config       *config.AccumulatorKafkaConfig
+	config       *config.ChargeKafkaConfig
 	eventHandler *application.ChargeEventHandler
 }
 
-func NewChargeConsumer(config *config.AccumulatorKafkaConfig, eventHandler *application.ChargeEventHandler) (application.ChargeConsumer, error) {
+func NewChargeConsumer(config *config.ChargeKafkaConfig, eventHandler *application.ChargeEventHandler) (application.ChargeConsumer, error) {
 	configMap := config.ToKafkaConfigMap()
 
 	consumer, err := kafka.NewConsumer(&configMap)
@@ -41,13 +41,6 @@ func NewChargeConsumer(config *config.AccumulatorKafkaConfig, eventHandler *appl
 }
 
 func (c *ChargeConsumerImpl) PollAndProcessMessages() {
-	log.Debug().
-		Str("topic", c.config.Topic).
-		Str("group_id", c.config.GroupID).
-		Dur("poll_timeout", c.config.PollTimeout).
-		Int("max_batch_size", c.config.MaxBatchSize).
-		Msg("Starting Kafka consumer polling")
-
 	defer c.consumer.Close()
 
 	for {
@@ -61,7 +54,7 @@ func (c *ChargeConsumerImpl) pollAndProcessBatch() {
 	var message *kafka.Message
 	var events []*application.ChargeEvent
 
-	deadline := time.Now().Add(60 * time.Second)
+	deadline := time.Now().Add(c.config.PollTimeout * time.Second)
 
 	for len(events) < c.config.MaxBatchSize && time.Now().Before(deadline) {
 		msg, err := c.consumer.ReadMessage(c.config.PollTimeout)

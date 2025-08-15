@@ -9,7 +9,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-type AccumulatorKafkaConfig struct {
+type ChargeKafkaConfig struct {
 	BootstrapServers string
 	GroupID          string
 	Topic            string
@@ -17,24 +17,24 @@ type AccumulatorKafkaConfig struct {
 	MaxBatchSize     int
 }
 
-func NewAccumulatorKafkaConfig() (*AccumulatorKafkaConfig, error) {
-	bootstrapServers := os.Getenv("ACCUMULATOR_KAFKA_BOOTSTRAP_SERVERS")
+func NewChargeKafkaConfig() (*ChargeKafkaConfig, error) {
+	bootstrapServers := os.Getenv("CHARGE_KAFKA_BOOTSTRAP_SERVERS")
 	if bootstrapServers == "" {
-		return nil, errors.New("ACCUMULATOR_KAFKA_BOOTSTRAP_SERVERS environment variable is not set")
+		return nil, errors.New("CHARGE_KAFKA_BOOTSTRAP_SERVERS environment variable is not set")
 	}
 
-	groupID := os.Getenv("ACCUMULATOR_KAFKA_GROUP_ID")
-	if groupID == "" {
-		return nil, errors.New("ACCUMULATOR_KAFKA_GROUP_ID environment variable is not set")
-	}
-
-	topic := os.Getenv("ACCUMULATOR_KAFKA_TOPIC")
+	topic := os.Getenv("CHARGE_KAFKA_TOPIC")
 	if topic == "" {
-		return nil, errors.New("ACCUMULATOR_KAFKA_TOPIC environment variable is not set")
+		return nil, errors.New("CHARGE_KAFKA_TOPIC environment variable is not set")
+	}
+
+	groupID := os.Getenv("CHARGE_KAFKA_GROUP_ID")
+	if groupID == "" {
+		return nil, errors.New("CHARGE_KAFKA_GROUP_ID environment variable is not set")
 	}
 
 	// Default poll duration to 60 seconds as specified in requirements
-	pollDurationStr := os.Getenv("ACCUMULATOR_KAFKA_POLL_DURATION_SEC")
+	pollDurationStr := os.Getenv("CHARGE_KAFKA_POLL_DURATION_SEC")
 	pollDuration := 60 * time.Second
 	if pollDurationStr != "" {
 		if seconds, err := strconv.Atoi(pollDurationStr); err == nil {
@@ -43,7 +43,7 @@ func NewAccumulatorKafkaConfig() (*AccumulatorKafkaConfig, error) {
 	}
 
 	// Default batch size to 1000 as specified in requirements
-	maxBatchSizeStr := os.Getenv("ACCUMULATOR_KAFKA_MAX_BATCH_SIZE")
+	maxBatchSizeStr := os.Getenv("CHARGE_KAFKA_MAX_BATCH_SIZE")
 	maxBatchSize := 1000
 	if maxBatchSizeStr != "" {
 		if size, err := strconv.Atoi(maxBatchSizeStr); err == nil && size > 0 {
@@ -51,7 +51,7 @@ func NewAccumulatorKafkaConfig() (*AccumulatorKafkaConfig, error) {
 		}
 	}
 
-	return &AccumulatorKafkaConfig{
+	return &ChargeKafkaConfig{
 		BootstrapServers: bootstrapServers,
 		GroupID:          groupID,
 		Topic:            topic,
@@ -60,7 +60,7 @@ func NewAccumulatorKafkaConfig() (*AccumulatorKafkaConfig, error) {
 	}, nil
 }
 
-func (c *AccumulatorKafkaConfig) ToKafkaConfigMap() kafka.ConfigMap {
+func (c *ChargeKafkaConfig) ToKafkaConfigMap() kafka.ConfigMap {
 	return kafka.ConfigMap{
 		"bootstrap.servers":               c.BootstrapServers,
 		"group.id":                        c.GroupID,

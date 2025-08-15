@@ -5,29 +5,29 @@ import (
 	"os"
 )
 
-type AccumulatorMongoConfig struct {
+type ChargeMongoConfig struct {
 	MongoURI   string
 	Database   string
 	Collection string
 }
 
-func NewAccumulatorMongoConfig() (*AccumulatorMongoConfig, error) {
-	mongoURI := os.Getenv("ACCUMULATOR_MONGO_URI")
+func NewChargeMongoConfig() (*ChargeMongoConfig, error) {
+	mongoURI := os.Getenv("CHARGE_MONGO_URI")
 	if mongoURI == "" {
-		return nil, errors.New("ACCUMULATOR_MONGO_URI environment variable is not set")
+		return nil, errors.New("CHARGE_MONGO_URI environment variable is not set")
 	}
 
-	database := os.Getenv("ACCUMULATOR_MONGO_DATABASE")
+	database := os.Getenv("CHARGE_MONGO_DATABASE")
 	if database == "" {
-		return nil, errors.New("ACCUMULATOR_MONGO_DATABASE environment variable is not set")
+		return nil, errors.New("CHARGE_MONGO_DATABASE environment variable is not set")
 	}
 
-	collection := os.Getenv("ACCUMULATOR_MONGO_COLLECTION")
+	collection := os.Getenv("CHARGE_MONGO_COLLECTION")
 	if collection == "" {
-		return nil, errors.New("ACCUMULATOR_MONGO_COLLECTION environment variable is not set")
+		return nil, errors.New("CHARGE_MONGO_COLLECTION environment variable is not set")
 	}
 
-	return &AccumulatorMongoConfig{
+	return &ChargeMongoConfig{
 		MongoURI:   mongoURI,
 		Database:   database,
 		Collection: collection,

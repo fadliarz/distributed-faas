@@ -40,13 +40,13 @@ func (s *ChargeApplicationServiceImpl) ProcessChargeEventBatch(ctx context.Conte
 		timestamp := time.Date(time.Now().Year(), time.Now().Month(), 0, 0, 0, 0, 0, time.UTC).Unix()
 
 		if entry, exists := chargeMap[key]; exists {
-			entry.AccumulatedAmount = valueobject.NewAmount(entry.AccumulatedAmount.Int64() + event.Amount.Int64())
+			entry.AccumulatedAmount = entry.AccumulatedAmount.Add(event.AggregatedAmount)
 		} else {
 			chargeMap[key] = &domain.Charge{
 				UserID:            event.UserID,
 				ServiceID:         event.ServiceID,
 				Timestamp:         valueobject.NewTimestamp(timestamp),
-				AccumulatedAmount: event.Amount,
+				AccumulatedAmount: event.AggregatedAmount,
 			}
 		}
 	}

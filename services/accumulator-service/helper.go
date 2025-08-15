@@ -71,7 +71,7 @@ func setupRepositoryManager(ctx context.Context) (*RepositoryManager, error) {
 
 func setupChargeRepository(ctx context.Context) (application.ChargeRepository, error) {
 	// Config
-	config, err := config.NewAccumulatorMongoConfig()
+	config, err := config.NewChargeMongoConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load accumulator mongo config: %w", err)
 	}
@@ -101,7 +101,7 @@ func setupChargeRepository(ctx context.Context) (application.ChargeRepository, e
 
 func setupKafkaConsumer(ctx context.Context, repositoryManager *RepositoryManager) (application.ChargeConsumer, error) {
 	// Config
-	kafkaConfig, err := config.NewAccumulatorKafkaConfig()
+	kafkaConfig, err := config.NewChargeKafkaConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load kafka config: %w", err)
 	}
