@@ -28,19 +28,9 @@ type Config struct {
 
 // Env
 
-func loadEnv(config *Config) {
+func loadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Warn().Msg("No .env file found")
-	}
-
-	if timeout := os.Getenv("SHUTDOWN_TIMEOUT"); timeout != "" {
-		if parsed, err := time.ParseDuration(timeout); err == nil {
-			config.ShutdownTimeout = parsed
-		}
-	}
-
-	if config.ShutdownTimeout == 0 {
-		config.ShutdownTimeout = 30 * time.Second
+		log.Warn().Msg("No .env file found, using default configuration")
 	}
 }
 
@@ -50,59 +40,113 @@ type Dependencies struct {
 	consumer application.BillingCalculationConsumer
 }
 
+type RepositoryManager struct {
+	Charge  application.ChargeRepository
+	Billing application.BillingRepository
+}
+
 func setupDependencies(ctx context.Context) (*Dependencies, error) {
-	// Load configurations
-	mongoConfig, err := config.NewBillingCalculatorMongoConfig()
+	repositoryManager, err := setupRepositoryManager(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load mongo config: %w", err)
+		return nil, fmt.Errorf("failed to setup repository manager: %w", err)
 	}
 
-	kafkaConfig, err := config.NewBillingCalculatorKafkaConfig()
+	consumer, err := setupConsumer(ctx, repositoryManager)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup consumer: %w", err)
+	}
+
+	return &Dependencies{
+		consumer: consumer,
+	}, nil
+}
+
+func setupRepositoryManager(ctx context.Context) (*RepositoryManager, error) {
+	chargeRepository, err := setupChargeRepository(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup charge repository: %w", err)
+	}
+
+	billingRepository, err := setupBillingRepository(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup billing repository: %w", err)
+	}
+
+	return &RepositoryManager{
+		Charge:  chargeRepository,
+		Billing: billingRepository,
+	}, nil
+}
+
+func setupChargeRepository(ctx context.Context) (application.ChargeRepository, error) {
+	// Config
+	config, err := config.NewChargeMongoConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load charge mongo config: %w", err)
+	}
+
+	// Collection
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.MongoURI))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to MongoDB")
+	}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to ping MongoDB")
+	}
+
+	log.Info().Msgf("Ping MongoDB successful for database %s and collection %s", config.Database, config.Collection)
+
+	collection := client.Database(config.Database).Collection(config.Collection)
+
+	return repository.NewChargeRepository(repository.NewChargeDataAccessMapper(), repository.NewChargeMongoRepository(collection)), nil
+}
+
+func setupBillingRepository(ctx context.Context) (application.BillingRepository, error) {
+	// Config
+	config, err := config.NewBillingMongoConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load billing mongo config: %w", err)
+	}
+
+	// Collection
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.MongoURI))
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to MongoDB")
+	}
+
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to ping MongoDB")
+	}
+
+	log.Info().Msgf("Ping MongoDB successful for database %s and collection %s", config.Database, config.Collection)
+
+	collection := client.Database(config.Database).Collection(config.Collection)
+
+	return repository.NewBillingRepository(repository.NewBillingDataAccessMapper(), repository.NewBillingMongoRepository(collection)), nil
+}
+
+func setupConsumer(ctx context.Context, repositoryManager *RepositoryManager) (application.BillingCalculationConsumer, error) {
+	// Application Service
+	applicationService := application.NewBillingCalculatorApplicationService(
+		application.NewBillingCalculatorDataMapper(),
+		domain.NewBillingCalculatorDomainService(),
+		application.NewBillingCalculatorApplicationServiceRepositoryManager(
+			repositoryManager.Charge,
+			repositoryManager.Billing,
+		),
+	)
+
+	// Event Handler
+	eventHandler := application.NewBillingCalculationEventHandler(applicationService)
+
+	// Kafka Config
+	kafkaConfig, err := config.NewCronKafkaConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load kafka config: %w", err)
 	}
-
-	// Setup MongoDB
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoConfig.MongoURI))
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
-	}
-
-	if err := client.Ping(ctx, nil); err != nil {
-		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
-	}
-
-	database := client.Database(mongoConfig.Database)
-	chargeCollection := database.Collection(mongoConfig.ChargeCollection)
-	billingCollection := database.Collection(mongoConfig.BillingCollection)
-
-	// Setup repositories
-	chargeMapper := repository.NewChargeDataAccessMapper()
-	chargeMongoRepo := repository.NewChargeMongoRepository(chargeCollection)
-	chargeRepository := repository.NewChargeRepository(chargeMapper, chargeMongoRepo)
-
-	billingMapper := repository.NewBillingDataAccessMapper()
-	billingMongoRepo := repository.NewBillingMongoRepository(billingCollection)
-	billingRepository := repository.NewBillingRepository(billingMapper, billingMongoRepo)
-
-	repositoryManager := application.NewBillingCalculatorApplicationServiceRepositoryManager(
-		chargeRepository,
-		billingRepository,
-	)
-
-	// Setup domain services
-	domainService := domain.NewBillingCalculatorDomainService()
-
-	// Setup application services
-	dataMapper := application.NewBillingCalculatorDataMapper()
-	applicationService := application.NewBillingCalculatorApplicationService(
-		dataMapper,
-		domainService,
-		repositoryManager,
-	)
-
-	// Setup event handler
-	eventHandler := application.NewBillingCalculationEventHandler(applicationService)
 
 	// Setup Kafka consumer
 	kafkaConsumerConfig := &kafka.ConsumerConfig{
@@ -129,23 +173,14 @@ func setupDependencies(ctx context.Context) (*Dependencies, error) {
 
 	log.Info().Msg("All dependencies successfully initialized")
 
-	return &Dependencies{
-		consumer: consumer,
-	}, nil
+	return consumer, nil
 }
 
-// Helpers
+// Consumer
 
-func setupShutdownHandler() <-chan struct{} {
-	shutdown := make(chan struct{})
-	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+func setupShutdownHandler() <-chan os.Signal {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		<-sigchan
-		log.Info().Msg("Received shutdown signal")
-		close(shutdown)
-	}()
-
-	return shutdown
+	return sigChan
 }

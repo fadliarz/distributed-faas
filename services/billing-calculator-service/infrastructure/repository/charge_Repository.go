@@ -20,8 +20,8 @@ func NewChargeRepository(mapper ChargeDataAccessMapper, repo *ChargeMongoReposit
 	}
 }
 
-func (r *ChargeRepositoryImpl) FindChargesByUserIDAndTimeRange(ctx context.Context, userID valueobject.UserID, startTime, endTime int64) ([]domain.Charge, error) {
-	entities, err := r.repo.FindChargesByUserIDAndTimeRange(ctx, userID.String(), startTime, endTime)
+func (r *ChargeRepositoryImpl) FindChargesByUserIDAndTimeRange(ctx context.Context, userID valueobject.UserID, timestamp valueobject.Timestamp) ([]domain.Charge, error) {
+	entities, err := r.repo.FindChargesByUserIDAndTimeRange(ctx, userID.String(), timestamp.Int64())
 	if err != nil {
 		return nil, err
 	}

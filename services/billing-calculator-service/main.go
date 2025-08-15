@@ -7,11 +7,10 @@ import (
 )
 
 func main() {
-	config := &Config{}
-
-	loadEnv(config)
+	loadEnv()
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	dependencies, err := setupDependencies(ctx)
@@ -23,13 +22,13 @@ func main() {
 
 	shutdown := setupShutdownHandler()
 
-	// Start the consumer
 	go func() {
 		log.Info().Msg("Starting billing calculation consumer")
+
 		dependencies.consumer.PollAndProcessMessages()
 	}()
 
-	// Wait for shutdown signal
 	<-shutdown
+
 	log.Info().Msg("Shutting down billing calculator service")
 }

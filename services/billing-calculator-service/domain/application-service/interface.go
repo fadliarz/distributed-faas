@@ -8,17 +8,10 @@ import (
 	"github.com/fadliarz/distributed-faas/services/billing-calculator-service/domain/domain-core"
 )
 
-// Events
-
-type BillingCalculationEvent struct {
-	UserID     string `json:"_id"`
-	LastBilled int64  `json:"last_billed"`
-}
-
 // Ports
 
 type ChargeRepository interface {
-	FindChargesByUserIDAndTimeRange(ctx context.Context, userID valueobject.UserID, startTime, endTime int64) ([]domain.Charge, error)
+	FindChargesByUserIDAndTimeRange(ctx context.Context, userID valueobject.UserID, timestamp valueobject.Timestamp) ([]domain.Charge, error)
 }
 
 type BillingRepository interface {
@@ -32,7 +25,6 @@ type BillingCalculationConsumer interface {
 // Interfaces
 
 type BillingCalculatorDataMapper interface {
-	BillingCalculationEventToBillingPeriod(event *BillingCalculationEvent) *domain.BillingPeriod
 	BillingCalculationEventToBilling(event *BillingCalculationEvent) *domain.Billing
 }
 

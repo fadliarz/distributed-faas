@@ -2,10 +2,9 @@ package repository
 
 import (
 	"context"
-	"time"
 
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -19,13 +18,15 @@ func NewChargeMongoRepository(collection *mongo.Collection) *ChargeMongoReposito
 	}
 }
 
-func (r *ChargeMongoRepository) FindChargesByUserIDAndTimeRange(ctx context.Context, userID string, startTime, endTime int64) ([]*ChargeEntity, error) {
+func (r *ChargeMongoRepository) FindChargesByUserIDAndTimeRange(ctx context.Context, userID string, timestamp int64) ([]*ChargeEntity, error) {
+	log.Debug().
+		Str("user_id", userID).
+		Int64("timestamp", timestamp).
+		Msg("Finding charges")
+
 	filter := bson.M{
-		"user_id": userID,
-		"_id": bson.M{
-			"$gte": primitive.NewObjectIDFromTimestamp(time.Unix(0, startTime)),
-			"$lt":  primitive.NewDateTimeFromTime(time.Time(time.Unix(0, endTime))),
-		},
+		"user_id":   userID,
+		"timestamp": timestamp,
 	}
 
 	cursor, err := r.collection.Find(ctx, filter)

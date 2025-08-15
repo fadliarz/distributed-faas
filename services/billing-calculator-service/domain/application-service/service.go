@@ -21,11 +21,7 @@ type BillingCalculatorApplicationServiceRepositoryManager struct {
 	Billing BillingRepository
 }
 
-func NewBillingCalculatorApplicationService(
-	mapper BillingCalculatorDataMapper,
-	domainService domain.BillingCalculatorDomainService,
-	repositoryManager *BillingCalculatorApplicationServiceRepositoryManager,
-) BillingCalculatorApplicationService {
+func NewBillingCalculatorApplicationService(mapper BillingCalculatorDataMapper, domainService domain.BillingCalculatorDomainService, repositoryManager *BillingCalculatorApplicationServiceRepositoryManager) BillingCalculatorApplicationService {
 	return &BillingCalculatorApplicationServiceImpl{
 		mapper:            mapper,
 		domainService:     domainService,
@@ -33,10 +29,7 @@ func NewBillingCalculatorApplicationService(
 	}
 }
 
-func NewBillingCalculatorApplicationServiceRepositoryManager(
-	chargeRepository ChargeRepository,
-	billingRepository BillingRepository,
-) *BillingCalculatorApplicationServiceRepositoryManager {
+func NewBillingCalculatorApplicationServiceRepositoryManager(chargeRepository ChargeRepository, billingRepository BillingRepository) *BillingCalculatorApplicationServiceRepositoryManager {
 	return &BillingCalculatorApplicationServiceRepositoryManager{
 		Charge:  chargeRepository,
 		Billing: billingRepository,
@@ -45,22 +38,16 @@ func NewBillingCalculatorApplicationServiceRepositoryManager(
 
 func (s *BillingCalculatorApplicationServiceImpl) ProcessBillingCalculation(ctx context.Context, event *BillingCalculationEvent) error {
 	billing := s.mapper.BillingCalculationEventToBilling(event)
-	billingPeriod := s.mapper.BillingCalculationEventToBillingPeriod(event)
 
-	// Get charges for the billing period
-	charges, err := s.repositoryManager.Charge.FindChargesByUserIDAndTimeRange(
-		ctx,
-		billingPeriod.UserID,
-		billingPeriod.StartTimestamp,
-		billingPeriod.EndTimestamp,
-	)
+	charges, err := s.repositoryManager.Charge.FindChargesByUserIDAndTimeRange(ctx, billing.UserID, valueobject.NewTimestamp(event.LastBilled))
 	if err != nil {
 		return fmt.Errorf("failed to retrieve charges: %w", err)
 	}
 
 	s.domainService.CalculateBilling(billing, charges)
 
-	billingID := valueobject.NewBillingID(primitive.NewObjectIDFromTimestamp(time.Unix(billingPeriod.EndTimestamp, 0)).Hex())
+	billingID := valueobject.NewBillingID(primitive.NewObjectIDFromTimestamp(time.Unix(event.LastBilled, 0)).Hex())
+
 	err = s.domainService.ValidateAndInitiateBilling(billing, billingID)
 	if err != nil {
 		return fmt.Errorf("failed to validate and initiate billing: %w", err)

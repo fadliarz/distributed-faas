@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type BillingCalculatorKafkaConfig struct {
+type CronKafkaConfig struct {
 	BootstrapServers string
 	Topic            string
 	GroupID          string
@@ -15,24 +15,24 @@ type BillingCalculatorKafkaConfig struct {
 	NumWorkers       int
 }
 
-func NewBillingCalculatorKafkaConfig() (*BillingCalculatorKafkaConfig, error) {
-	bootstrapServers := os.Getenv("BILLING_CALCULATOR_KAFKA_BOOTSTRAP_SERVERS")
+func NewCronKafkaConfig() (*CronKafkaConfig, error) {
+	bootstrapServers := os.Getenv("CRON_KAFKA_BOOTSTRAP_SERVERS")
 	if bootstrapServers == "" {
-		return nil, fmt.Errorf("missing BILLING_CALCULATOR_KAFKA_BOOTSTRAP_SERVERS environment variable")
+		return nil, fmt.Errorf("missing CRON_KAFKA_BOOTSTRAP_SERVERS environment variable")
 	}
 
-	topic := os.Getenv("BILLING_CALCULATOR_KAFKA_TOPIC")
+	topic := os.Getenv("CRON_KAFKA_TOPIC")
 	if topic == "" {
-		return nil, fmt.Errorf("missing BILLING_CALCULATOR_KAFKA_TOPIC environment variable")
+		return nil, fmt.Errorf("missing CRON_KAFKA_TOPIC environment variable")
 	}
 
-	groupID := os.Getenv("BILLING_CALCULATOR_KAFKA_GROUP_ID")
+	groupID := os.Getenv("CRON_KAFKA_GROUP_ID")
 	if groupID == "" {
-		return nil, fmt.Errorf("missing BILLING_CALCULATOR_KAFKA_GROUP_ID environment variable")
+		return nil, fmt.Errorf("missing CRON_KAFKA_GROUP_ID environment variable")
 	}
 
 	// Optional: Poll timeout with default
-	pollTimeoutStr := os.Getenv("BILLING_CALCULATOR_KAFKA_POLL_TIMEOUT")
+	pollTimeoutStr := os.Getenv("CRON_KAFKA_POLL_TIMEOUT")
 	pollTimeout := 30 * time.Second // default
 	if pollTimeoutStr != "" {
 		if parsed, err := time.ParseDuration(pollTimeoutStr); err == nil {
@@ -41,7 +41,7 @@ func NewBillingCalculatorKafkaConfig() (*BillingCalculatorKafkaConfig, error) {
 	}
 
 	// Optional: Number of workers with default
-	numWorkersStr := os.Getenv("BILLING_CALCULATOR_KAFKA_NUM_WORKERS")
+	numWorkersStr := os.Getenv("CRON_KAFKA_NUM_WORKERS")
 	numWorkers := 5 // default
 	if numWorkersStr != "" {
 		if parsed, err := strconv.Atoi(numWorkersStr); err == nil {
@@ -49,7 +49,7 @@ func NewBillingCalculatorKafkaConfig() (*BillingCalculatorKafkaConfig, error) {
 		}
 	}
 
-	return &BillingCalculatorKafkaConfig{
+	return &CronKafkaConfig{
 		BootstrapServers: bootstrapServers,
 		Topic:            topic,
 		GroupID:          groupID,
