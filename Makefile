@@ -13,6 +13,7 @@ gen-proto:
 	make gen-registrar-service
 	make gen-user-service
 	make gen-charge-service
+	make gen-billing-service
 
 gen-tests-integration:
 	@echo "Compiling Protobuf definitions for integration tests..."
@@ -154,6 +155,20 @@ gen-charge-service:
 
 	@echo "Protobuf compilation complete."
 
+gen-billing-service:
+	@echo "Compiling Protobuf definitions for billing service..."
+
+	mkdir -p ./services/billing-service/gen/go
+
+	protoc --proto_path=./proto \
+	--go_out=./services/billing-service/gen/go \
+	--go_opt=paths=source_relative \
+	--go-grpc_out=./services/billing-service/gen/go \
+	--go-grpc_opt=paths=source_relative \
+	./proto/billing-service/v1/api.proto
+
+	@echo "Protobuf compilation complete."
+
 #
 # Test
 # 
@@ -228,6 +243,7 @@ test-calculate-billing-verbose:
 
 	@echo "Removing existing Docker images..."
 	-docker rmi distributed-faas-distributed-faas-billing-calculator-service:latest 2>/dev/null || true
+	-docker rmi distributed-faas-distributed-faas-billing-service:latest 2>/dev/null || true
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
