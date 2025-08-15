@@ -28,13 +28,14 @@ type Composes struct {
 }
 
 type Containers struct {
-	Mongo       testcontainers.Container
-	Kafka       testcontainers.Container
-	UserService testcontainers.Container
+	Mongo         testcontainers.Container
+	Kafka         testcontainers.Container
+	ChargeService testcontainers.Container
 }
 
 type ConnectionStrings struct {
-	Mongo string
+	Mongo         string
+	ChargeService string
 }
 
 func NewContainerManager(ctx context.Context, config *TestConfig) *ContainerManager {
@@ -130,6 +131,11 @@ func (cm *ContainerManager) startContainers() error {
 			return fmt.Errorf("failed to start Services Docker Compose stack: %w", err)
 		}
 
+		cm.Containers.ChargeService, err = cm.Composes.Services.ServiceContainer(cm.ctx, cm.config.ContainerNames.ChargeService)
+		if err != nil {
+			return fmt.Errorf("failed to get Charge Service container: %w", err)
+		}
+
 		return nil
 	})
 
@@ -164,6 +170,7 @@ func (cm *ContainerManager) startContainers() error {
 }
 
 func (cm *ContainerManager) setupConnectionStrings() error {
+	// Mongo
 	host, err := cm.Containers.Mongo.Host(cm.ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get MongoDB container host: %w", err)
@@ -175,6 +182,19 @@ func (cm *ContainerManager) setupConnectionStrings() error {
 	}
 
 	cm.ConnectionStrings.Mongo = "mongodb://" + cm.config.MongoConfig.Username + ":" + cm.config.MongoConfig.Password + "@" + host + ":" + port.Port() + fmt.Sprintf("/?replicaSet=%s&directConnection=true", cm.config.MongoConfig.ReplicaSet)
+
+	// Charge Service
+	host, err = cm.Containers.ChargeService.Host(cm.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get Charge Service container host: %w", err)
+	}
+
+	port, err = cm.Containers.ChargeService.MappedPort(cm.ctx, "50050")
+	if err != nil {
+		return fmt.Errorf("failed to get Charge Service container port: %w", err)
+	}
+
+	cm.ConnectionStrings.ChargeService = host + ":" + port.Port()
 
 	return nil
 }

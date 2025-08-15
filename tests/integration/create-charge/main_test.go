@@ -67,7 +67,7 @@ func (suite *CreateUserCDCIntegrationTest) TestUserPersisted() {
 	}
 
 	// Act
-	err := suite.arrangeHelper.CreateCharges(requests)
+	err := suite.arrangeHelper.CreateCharges(suite.containerManager.ConnectionStrings.ChargeService, requests)
 	require.NoError(suite.T(), err, "Failed to create charges")
 
 	// Assert

@@ -13,8 +13,6 @@ type TestConfig struct {
 	ComposeConfig *ComposeConfig
 	MongoConfig   *MongoConfig
 	KafkaConfig   *KafkaConfig
-
-	GrpcEndpoints *GrpcEndpoints
 }
 
 type ComposePaths struct {
@@ -26,8 +24,9 @@ type ComposePaths struct {
 }
 
 type ContainerNames struct {
-	Mongo string
-	Kafka string
+	Mongo         string
+	Kafka         string
+	ChargeService string
 }
 
 type ComposeConfig struct {
@@ -75,8 +74,9 @@ func NewDefaultTestConfig() *TestConfig {
 			Services:  "/home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml",
 		},
 		ContainerNames: &ContainerNames{
-			Mongo: "distributed-faas-mongo",
-			Kafka: "distributed-faas-kafka-broker-1",
+			Mongo:         "distributed-faas-mongo",
+			Kafka:         "distributed-faas-kafka-broker-1",
+			ChargeService: "distributed-faas-charge-service",
 		},
 		ComposeConfig: &ComposeConfig{
 			ProjectID: "distributed-faas",
@@ -98,9 +98,6 @@ func NewDefaultTestConfig() *TestConfig {
 				Charge: uuid.NewString(),
 			},
 			Timeout: 120 * time.Second,
-		},
-		GrpcEndpoints: &GrpcEndpoints{
-			ChargeService: "localhost:50059",
 		},
 	}
 }

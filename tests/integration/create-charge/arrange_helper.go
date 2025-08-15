@@ -22,8 +22,8 @@ func NewArrangeHelper(t *testing.T, config *TestConfig) *ArrangeHelper {
 	}
 }
 
-func (h *ArrangeHelper) CreateCharges(requests []*charge_service_v1.CreateChargeRequest) error {
-	conn, err := grpc.NewClient(h.config.GrpcEndpoints.ChargeService, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (h *ArrangeHelper) CreateCharges(endpoint string, requests []*charge_service_v1.CreateChargeRequest) error {
+	conn, err := grpc.NewClient(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(h.t, err, "Failed to connect to gRPC server")
 
 	defer conn.Close()
