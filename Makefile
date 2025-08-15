@@ -158,25 +158,6 @@ gen-charge-service:
 # Test
 # 
 
-test-create-invocation:
-	@echo "Running integration tests for CDC function"
-
-	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
-
-	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/data
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/transactions
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/broker-1
-
-	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/dlq-1
-
-	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
-
-	go test ./tests/integration/create-invocation
-
 test-create-invocation-verbose:
 	@echo "Running integration tests for CDC function"
 
@@ -194,7 +175,7 @@ test-create-invocation-verbose:
 
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
-	go test -v ./tests/integration/create-invocation
+	go test -v -count=1 ./tests/integration/create-invocation
 
 test-create-user-verbose:
 	@echo "Running integration tests for Create User"
@@ -217,7 +198,7 @@ test-create-user-verbose:
 
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
-	go test -v ./tests/integration/create-user
+	go test -v -count=1 ./tests/integration/create-user
 
 test-create-charge-verbose:
 	@echo "Running integration tests for Create Charge"
@@ -240,7 +221,7 @@ test-create-charge-verbose:
 
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
-	go test -v ./tests/integration/create-charge
+	go test -v -count=1 ./tests/integration/create-charge
 
 test-calculate-billing-verbose:
 	@echo "Running integration tests for Calculate Billing"
@@ -262,4 +243,4 @@ test-calculate-billing-verbose:
 
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
-	go test -v ./tests/integration/calculate-billing
+	go test -v -count=1 ./tests/integration/calculate-billing
