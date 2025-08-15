@@ -39,8 +39,5 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/services/checkpoint-processor/main .
 
-# Expose port
-EXPOSE 50056
-
 # Run the binary
 CMD ["./main"]

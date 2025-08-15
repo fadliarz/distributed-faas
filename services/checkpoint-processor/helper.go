@@ -27,7 +27,7 @@ type Config struct {
 
 // Env
 
-func loadEnv(config *Config) {
+func loadEnv() {
 	if err := godotenv.Load(); err != nil {
 		log.Warn().Msg("No .env file found, using default configuration")
 	}
@@ -96,32 +96,79 @@ func setupInvocationRepository(ctx context.Context) (application.InvocationRepos
 }
 
 func setupCheckpointConsumer(ctx context.Context, repositoryManager *RepositoryManager) (application.CheckpointConsumer, error) {
+	// Application Service
+	applicationService := application.NewCheckpointEventHandler(
+		application.NewCheckpointProcessorDataMapper(),
+		application.NewCheckpointEventHandlerRepositoryManager(repositoryManager.Invocation),
+	)
+
 	// Config
-	config, err := config.NewCheckpointConsumerConfig()
+	kafkaConfig, err := config.NewCheckpointConsumerConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load kafka config: %w", err)
 	}
 
-	// Confluent Consumer
-	handler := application.NewCheckpointEventHandler(application.NewCheckpointProcessorDataMapper(), application.NewCheckpointEventHandlerRepositoryManager(repositoryManager.Invocation))
-	processor := messaging.NewCheckpointMessageProcessor(handler)
+	// Setup Kafka consumer
+	deserializer := messaging.NewCheckpointMessageDeserializer()
+	processor := messaging.NewCheckpointMessageProcessor(applicationService)
 
-	confluentConsumer, err := kafka.NewConfluentKafkaConsumer(ctx, config, messaging.NewCheckpointMessageDeserializer(), processor)
+	confluentConsumer, err := kafka.NewConfluentKafkaConsumer(ctx, kafkaConfig, deserializer, processor)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create ConfluentKafkaConsumer")
+		return nil, fmt.Errorf("failed to create Kafka consumer: %w", err)
 	}
 
-	// Consumer
 	consumer := messaging.NewCheckpointConsumer(confluentConsumer)
+
+	log.Info().Msg("Checkpoint consumer successfully initialized")
 
 	return consumer, nil
 }
 
-// Servers
+// Consumer
+
+func startConsumer(consumer application.CheckpointConsumer, shutdown <-chan os.Signal, timeout time.Duration) {
+	// Start consumer in a goroutine
+	consumerErr := make(chan error, 1)
+	go func() {
+		log.Info().Msg("Starting checkpoint consumer...")
+
+		consumer.PollAndProcessMessages()
+	}()
+
+	// Wait for shutdown signal
+	select {
+	case err := <-consumerErr:
+		log.Fatal().Msgf("consumer failed: %v", err)
+	case sig := <-shutdown:
+		log.Info().Msgf("Received signal: %s, shutting down...", sig)
+
+		gracefulShutdown(timeout)
+	}
+}
 
 func setupShutdownHandler() <-chan os.Signal {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	return sigChan
+}
+
+func gracefulShutdown(timeout time.Duration) {
+	log.Info().Msg("Gracefully stopping consumer...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		close(done)
+	}()
+
+	select {
+	case <-shutdownCtx.Done():
+		log.Warn().Msg("Shutdown timeout exceeded")
+	case <-done:
+		log.Info().Msg("Consumer stopped gracefully")
+	}
 }

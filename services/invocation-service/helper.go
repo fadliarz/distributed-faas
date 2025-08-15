@@ -57,7 +57,6 @@ type RepositoryManager struct {
 }
 
 func setupDependencies(ctx context.Context) (*Dependencies, error) {
-	// Repository Manager
 	repositoryManager, err := setupRepositoryManager(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup repository manager: %w", err)
@@ -142,7 +141,6 @@ func setupCommandHandler(repositoryManager *RepositoryManager) *application.Comm
 // Servers
 
 func setupGRPCServer(config *Config, dependencies *Dependencies) (*grpc.Server, net.Listener, error) {
-	// Create a TCP listener on the specified port
 	lis, err := net.Listen("tcp", config.Port)
 	if err != nil {
 		return nil, nil, err
@@ -150,10 +148,9 @@ func setupGRPCServer(config *Config, dependencies *Dependencies) (*grpc.Server, 
 
 	log.Info().Msgf("gRPC server listening on %s", config.Port)
 
-	// Create gRPC server and register the function server
 	grpcServer := grpc.NewServer()
-	functionServer := rpc.NewInvocationServer(dependencies.handler)
-	functionServer.Register(grpcServer)
+	invocationServer := rpc.NewInvocationServer(dependencies.handler)
+	invocationServer.Register(grpcServer)
 	reflection.Register(grpcServer)
 
 	return grpcServer, lis, nil
@@ -164,6 +161,7 @@ func startServer(server *grpc.Server, listener net.Listener, shutdown <-chan os.
 	serverErr := make(chan error, 1)
 	go func() {
 		log.Info().Msg("Starting gRPC server...")
+
 		if err := server.Serve(listener); err != nil {
 			serverErr <- err
 		}
@@ -175,6 +173,7 @@ func startServer(server *grpc.Server, listener net.Listener, shutdown <-chan os.
 		log.Fatal().Msgf("server failed: %v", err)
 	case sig := <-shutdown:
 		log.Info().Msgf("Received signal: %s, shutting down...", sig)
+
 		gracefulShutdown(server, timeout)
 	}
 }
@@ -195,12 +194,14 @@ func gracefulShutdown(server *grpc.Server, timeout time.Duration) {
 	done := make(chan struct{})
 	go func() {
 		server.GracefulStop()
+
 		close(done)
 	}()
 
 	select {
 	case <-shutdownCtx.Done():
 		log.Warn().Msg("Shutdown timeout exceeded, forcing stop")
+
 		server.Stop()
 	case <-done:
 		log.Info().Msg("Server stopped gracefully")

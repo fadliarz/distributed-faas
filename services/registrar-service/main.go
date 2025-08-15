@@ -9,7 +9,7 @@ import (
 
 func main() {
 	config := &Config{
-		Port:            ":50057",
+		Port:            ":50050",
 		ShutdownTimeout: 30 * time.Second,
 	}
 

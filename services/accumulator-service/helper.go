@@ -30,6 +30,18 @@ func loadEnv(config *Config) {
 	if err := godotenv.Load(); err != nil {
 		log.Warn().Msg("No .env file found, using default configuration")
 	}
+
+	if timeout := os.Getenv("SHUTDOWN_TIMEOUT"); timeout != "" {
+		if parsed, err := time.ParseDuration(timeout); err == nil {
+			config.ShutdownTimeout = parsed
+			log.Info().Msgf("Using shutdown timeout from .env: %s", config.ShutdownTimeout)
+		}
+	}
+
+	if config.ShutdownTimeout == 0 {
+		config.ShutdownTimeout = 30 * time.Second
+		log.Info().Msgf("Using default shutdown timeout: %s", config.ShutdownTimeout)
+	}
 }
 
 // Dependencies
@@ -48,7 +60,7 @@ func setupDependencies(ctx context.Context) (*Dependencies, error) {
 		return nil, fmt.Errorf("failed to setup repository manager: %w", err)
 	}
 
-	consumer, err := setupKafkaConsumer(ctx, repositoryManager)
+	consumer, err := setupKafkaConsumer(repositoryManager)
 	if err != nil {
 		return nil, fmt.Errorf("failed to setup kafka consumer: %w", err)
 	}
@@ -99,31 +111,74 @@ func setupChargeRepository(ctx context.Context) (application.ChargeRepository, e
 	return repo, nil
 }
 
-func setupKafkaConsumer(ctx context.Context, repositoryManager *RepositoryManager) (application.ChargeConsumer, error) {
+func setupKafkaConsumer(repositoryManager *RepositoryManager) (application.ChargeConsumer, error) {
+	// Application Service
+	applicationService := application.NewChargeApplicationService(repositoryManager.Charge)
+	eventHandler := application.NewChargeEventHandler(applicationService)
+
 	// Config
 	kafkaConfig, err := config.NewChargeKafkaConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load kafka config: %w", err)
 	}
 
-	// Application service and handler
-	chargeService := application.NewChargeApplicationService(repositoryManager.Charge)
-	eventHandler := application.NewChargeEventHandler(chargeService)
-
-	// Custom Kafka consumer
+	// Setup Kafka consumer
 	consumer, err := messaging.NewChargeConsumer(kafkaConfig, eventHandler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kafka consumer: %w", err)
 	}
 
+	log.Info().Msg("Charge consumer successfully initialized")
+
 	return consumer, nil
 }
 
-// Shutdown
+// Consumer
+
+func startConsumer(consumer application.ChargeConsumer, shutdown <-chan os.Signal, timeout time.Duration) {
+	// Start consumer in a goroutine
+	consumerErr := make(chan error, 1)
+	go func() {
+		log.Info().Msg("Starting charge consumer...")
+
+		consumer.PollAndProcessMessages()
+	}()
+
+	// Wait for shutdown signal
+	select {
+	case err := <-consumerErr:
+		log.Fatal().Msgf("consumer failed: %v", err)
+	case sig := <-shutdown:
+		log.Info().Msgf("Received signal: %s, shutting down...", sig)
+
+		gracefulShutdown(timeout)
+	}
+}
 
 func setupShutdownHandler() <-chan os.Signal {
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	return shutdown
+	return sigChan
+}
+
+func gracefulShutdown(timeout time.Duration) {
+	log.Info().Msg("Gracefully stopping consumer...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	defer cancel()
+
+	done := make(chan struct{})
+
+	go func() {
+		close(done)
+	}()
+
+	select {
+	case <-shutdownCtx.Done():
+		log.Warn().Msg("Shutdown timeout exceeded")
+	case <-done:
+		log.Info().Msg("Consumer stopped gracefully")
+	}
 }

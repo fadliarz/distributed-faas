@@ -16,6 +16,7 @@ func main() {
 	loadEnv(config)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	dependencies, err := setupDependencies(ctx)

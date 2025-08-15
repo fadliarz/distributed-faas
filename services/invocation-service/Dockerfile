@@ -29,7 +29,7 @@ WORKDIR /root/
 COPY --from=builder /app/services/invocation-service/main .
 
 # Expose port
-EXPOSE 50053
+EXPOSE 50050
 
 # Run the binary
 CMD ["./main"]

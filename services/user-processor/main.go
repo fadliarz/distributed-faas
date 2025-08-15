@@ -2,14 +2,20 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
+	config := &Config{
+		ShutdownTimeout: 30 * time.Second,
+	}
+
 	loadEnv()
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	dependencies, err := setupDependencies(ctx)
@@ -19,9 +25,5 @@ func main() {
 
 	shutdown := setupShutdownHandler()
 
-	go func() {
-		dependencies.consumer.PollAndProcessMessages()
-	}()
-
-	<-shutdown
+	startConsumer(dependencies.consumer, shutdown, config.ShutdownTimeout)
 }

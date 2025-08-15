@@ -26,7 +26,7 @@ WORKDIR /root/
 COPY --from=builder /app/services/registrar-service/main .
 
 # Expose port
-EXPOSE 50057
+EXPOSE 50050
 
 # Run the binary
 CMD ["./main"]

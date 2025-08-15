@@ -29,7 +29,7 @@ WORKDIR /root/
 COPY --from=builder /app/services/machine/main .
 
 # Expose port
-EXPOSE 50055
+EXPOSE 50050
 
 # Run the binary
 CMD ["./main"]

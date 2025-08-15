@@ -39,8 +39,5 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/services/dispatcher-service/main .
 
-# Expose port
-EXPOSE 50054
-
 # Run the binary
 CMD ["./main"]

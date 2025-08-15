@@ -40,7 +40,7 @@ WORKDIR /root/
 COPY --from=builder /app/services/charge-service/main .
 
 # Expose port
-EXPOSE 50059
+EXPOSE 50050
 
 # Run the binary
 CMD ["./main"]

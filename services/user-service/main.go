@@ -9,13 +9,14 @@ import (
 
 func main() {
 	config := &Config{
-		Port:            ":50058",
+		Port:            ":50050",
 		ShutdownTimeout: 30 * time.Second,
 	}
 
 	loadEnv(config)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	dependencies, err := setupDependencies(ctx)

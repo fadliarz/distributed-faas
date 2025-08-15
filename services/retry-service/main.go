@@ -8,9 +8,14 @@ import (
 )
 
 func main() {
+	config := &Config{
+		ShutdownTimeout: 30 * time.Second,
+	}
+
 	loadEnv()
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	defer cancel()
 
 	dependencies, err := setupDependencies(ctx)
@@ -20,26 +25,5 @@ func main() {
 
 	shutdown := setupShutdownHandler()
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				log.Info().Msg("context cancelled, shutting down")
-
-				return
-			default:
-				err := dependencies.Handler.RetryInvocations(ctx, dependencies.ConfigManager.Retry.ThresholdInSec)
-
-				if err != nil {
-					log.Error().Err(err).Msg("an error occured")
-				} else {
-					log.Info().Msg("retry invocations completed successfully")
-				}
-
-				time.Sleep(time.Duration(dependencies.ConfigManager.Retry.RetryIntervalInSec) * time.Second)
-			}
-		}
-	}()
-
-	<-shutdown
+	startRetryService(dependencies.Handler, dependencies.ConfigManager.Retry, shutdown, config.ShutdownTimeout, ctx)
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/fadliarz/distributed-faas/infrastructure/kafka"
 	"github.com/fadliarz/distributed-faas/services/user-processor/config"
@@ -18,6 +19,12 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+// Config
+
+type Config struct {
+	ShutdownTimeout time.Duration
+}
 
 // Env
 
@@ -90,32 +97,81 @@ func setupCronRepository(ctx context.Context) (application.CronRepository, error
 }
 
 func setupUserConsumer(ctx context.Context, repositoryManager *RepositoryManager) (application.UserConsumer, error) {
+	// Application Service
+	applicationService := application.NewUserEventHandler(
+		application.NewUserProcessorDataMapper(),
+		domain.NewUserProcessorDomainService(),
+		application.NewUserEventHandlerRepositoryManager(repositoryManager.Cron),
+	)
+
 	// Config
-	config, err := config.NewUserConsumerConfig()
+	kafkaConfig, err := config.NewUserConsumerConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load kafka config: %w", err)
 	}
 
-	// Confluent Consumer
-	handler := application.NewUserEventHandler(application.NewUserProcessorDataMapper(), domain.NewUserProcessorDomainService(), application.NewUserEventHandlerRepositoryManager(repositoryManager.Cron))
-	processor := messaging.NewUserMessageProcessor(handler)
+	// Setup Kafka consumer
+	deserializer := messaging.NewUserMessageDeserializer()
+	processor := messaging.NewUserMessageProcessor(applicationService)
 
-	confluentConsumer, err := kafka.NewConfluentKafkaConsumer(ctx, config, messaging.NewUserMessageDeserializer(), processor)
+	confluentConsumer, err := kafka.NewConfluentKafkaConsumer(ctx, kafkaConfig, deserializer, processor)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create ConfluentKafkaConsumer")
+		return nil, fmt.Errorf("failed to create Kafka consumer: %w", err)
 	}
 
-	// Consumer
 	consumer := messaging.NewUserConsumer(confluentConsumer)
+
+	log.Info().Msg("User consumer successfully initialized")
 
 	return consumer, nil
 }
 
-// Servers
+// Consumer
+
+func startConsumer(consumer application.UserConsumer, shutdown <-chan os.Signal, timeout time.Duration) {
+	// Start consumer in a goroutine
+	consumerErr := make(chan error, 1)
+	go func() {
+		log.Info().Msg("Starting user consumer...")
+
+		consumer.PollAndProcessMessages()
+	}()
+
+	// Wait for shutdown signal
+	select {
+	case err := <-consumerErr:
+		log.Fatal().Msgf("consumer failed: %v", err)
+	case sig := <-shutdown:
+		log.Info().Msgf("Received signal: %s, shutting down...", sig)
+
+		gracefulShutdown(consumer, timeout)
+	}
+}
 
 func setupShutdownHandler() <-chan os.Signal {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	return sigChan
+}
+
+func gracefulShutdown(consumer application.UserConsumer, timeout time.Duration) {
+	log.Info().Msg("Gracefully stopping consumer...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	defer cancel()
+
+	done := make(chan struct{})
+
+	go func() {
+		close(done)
+	}()
+
+	select {
+	case <-shutdownCtx.Done():
+		log.Warn().Msg("Shutdown timeout exceeded")
+	case <-done:
+		log.Info().Msg("Consumer stopped gracefully")
+	}
 }

@@ -28,8 +28,5 @@ WORKDIR /root/
 # Copy the binary from builder stage
 COPY --from=builder /app/services/function-service/main .
 
-# Expose port
-EXPOSE 50051
-
 # Run the binary
 CMD ["./main"]

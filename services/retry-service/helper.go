@@ -102,17 +102,68 @@ func setupCheckpointRepository(ctx context.Context) (application.CheckpointRepos
 }
 
 func setupRetryHandler(repositoryManager *RepositoryManager) *application.RetryHandler {
-	// Confluent Consumer
-	applicationService := application.NewRetryApplicationService(*application.NewRetryApplicationServiceRepositoryManager(repositoryManager.Checkpoint))
+	// Application Service
+	applicationService := application.NewRetryApplicationService(
+		*application.NewRetryApplicationServiceRepositoryManager(repositoryManager.Checkpoint),
+	)
 
 	return application.NewRetryHandler(applicationService)
 }
 
-// Servers
+// Service
+
+func startRetryService(handler *application.RetryHandler, config *config.RetryConfig, shutdown <-chan os.Signal, timeout time.Duration, ctx context.Context) {
+	// Start service in a goroutine
+	serviceErr := make(chan error, 1)
+	go func() {
+		log.Info().Msg("Starting retry service...")
+
+		for {
+			select {
+			case <-ctx.Done():
+				log.Info().Msg("Context cancelled, shutting down")
+
+				return
+			default:
+				err := handler.RetryInvocations(ctx, config.ThresholdInSec)
+				if err != nil {
+					log.Error().Err(err).Msg("An error occurred during retry")
+				} else {
+					log.Info().Msg("Retry invocations completed successfully")
+				}
+
+				time.Sleep(time.Duration(config.RetryIntervalInSec) * time.Second)
+			}
+		}
+	}()
+
+	// Wait for shutdown signal
+	select {
+	case err := <-serviceErr:
+		log.Fatal().Msgf("service failed: %v", err)
+	case sig := <-shutdown:
+		log.Info().Msgf("Received signal: %s, shutting down...", sig)
+
+		gracefulShutdown(timeout)
+	}
+}
 
 func setupShutdownHandler() <-chan os.Signal {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	return sigChan
+}
+
+func gracefulShutdown(timeout time.Duration) {
+	log.Info().Msg("Gracefully stopping service...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	defer cancel()
+
+	// Wait for the timeout
+	<-shutdownCtx.Done()
+
+	log.Info().Msg("Service stopped gracefully")
 }
