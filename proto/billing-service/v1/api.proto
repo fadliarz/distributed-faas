@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package fadliarz.distributed_faas.billing_service.v1;
+
+option go_package = "github.com/fadliarz/distributed-faas/services/billing-service/gen/go/v1;billing_service_v1";
+
+service BillingService {
+    rpc GetBilling(GetBillingRequest) returns (GetBillingResponse);
+}
+
+message GetBillingRequest {
+    string user_id = 1;
+}
+
+message GetBillingResponse {
+    string billing_id = 1;
+    string user_id = 2;
+    int64 last_billed = 3;
+    int64 amount = 4;
+}
