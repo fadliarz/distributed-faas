@@ -16,7 +16,10 @@ services:
       - "./volumes/kafka/broker-1:/var/lib/kafka/data"
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
- 
+    profiles:
+      - test-create-invocation
+      - test-create-user
+      - test-create-charge
 
   distributed-faas-kafka-dlq-1:
     container_name: distributed-faas-kafka-dlq-1
@@ -36,6 +39,10 @@ services:
       - "./volumes/kafka/dlq-1:/var/lib/kafka/data"
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
+    profiles:
+      - test-create-invocation
+      - test-create-user
+      - test-create-charge
 
   distributed-faas-debezium-connect:
     container_name: distributed-faas-debezium-connect
@@ -54,3 +61,6 @@ services:
       - "/mnt/d/volumes/debezium/filter-smt:/kafka/connect/debezium-connector-mongodb/filter-smt"
     networks:
       - ${GLOBAL_NETWORK:-distributed-faas}
+    profiles:
+      - test-create-invocation
+      - test-create-user
