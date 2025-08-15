@@ -5,9 +5,9 @@ services:
       context: ../../../
       dockerfile: services/function-service/Dockerfile
     ports:
-      - 50051:50051
+      - 50050:50050
     environment:
-      PORT: 50051
+      PORT: 50050
       FUNCTION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       FUNCTION_MONGO_DATABASE: invocation-db
       FUNCTION_MONGO_COLLECTION: function
@@ -23,9 +23,9 @@ services:
       context: ../../../
       dockerfile: services/invocation-service/Dockerfile
     ports:
-      - 50053:50053
+      - 50051:50050
     environment:
-      PORT: 50053
+      PORT: 50050
       INVOCATION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       INVOCATION_MONGO_DATABASE: invocation-db
       INVOCATION_MONGO_COLLECTION: invocation
@@ -43,10 +43,7 @@ services:
     build:
       context: ../../../
       dockerfile: services/dispatcher-service/Dockerfile
-    ports:
-      - 50054:50054
     environment:
-      PORT: 50054
       MACHINE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       MACHINE_MONGO_DATABASE: machine-db
       MACHINE_MONGO_COLLECTION: machine
@@ -65,9 +62,9 @@ services:
       context: ../../../
       dockerfile: services/machine/Dockerfile
     ports:
-      - 50055:50055
+      - 50052:50050
     environment:
-      PORT: 50055
+      PORT: 50050
       CHECKPOINT_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       CHECKPOINT_MONGO_DATABASE: checkpoint-db
       CHECKPOINT_MONGO_COLLECTION: checkpoint
@@ -88,10 +85,7 @@ services:
     build:
       context: ../../../
       dockerfile: services/checkpoint-processor/Dockerfile
-    ports:
-      - 50056:50056
     environment:
-      PORT: 50056
       INVOCATION_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       INVOCATION_MONGO_DATABASE: invocation-db
       INVOCATION_MONGO_COLLECTION: invocation
@@ -110,9 +104,9 @@ services:
       context: ../../../
       dockerfile: services/registrar-service/Dockerfile
     ports:
-      - 50057:50057
+      - 50053:50050
     environment:
-      PORT: 50057
+      PORT: 50050
       MACHINE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       MACHINE_MONGO_DATABASE: machine-db
       MACHINE_MONGO_COLLECTION: machine
@@ -145,9 +139,9 @@ services:
       context: ../../../
       dockerfile: services/user-service/Dockerfile
     ports:
-      - 50058:50058
+      - 50054:50050
     environment:
-      PORT: 50058
+      PORT: 50050
       USER_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
       USER_MONGO_DATABASE: user-db
       USER_MONGO_COLLECTION: user
@@ -181,8 +175,9 @@ services:
       context: ../../../
       dockerfile: services/charge-service/Dockerfile
     ports:
-      - 50059:50050
+      - 50055:50050
     environment:
+      PORT: 50050
       CHARGE_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
       CHARGE_KAFKA_TOPIC: charge
     networks:
@@ -210,3 +205,26 @@ services:
     restart: always
     profiles:
       - test-create-charge
+
+  distributed-faas-billing-calculator-service:
+    container_name: distributed-faas-billing-calculator-service
+    build:
+      context: ../../../
+      dockerfile: services/billing-calculator-service/Dockerfile
+    environment:
+      BILLING_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      BILLING_MONGO_DATABASE: billing-db
+      BILLING_MONGO_COLLECTION: billing
+      CHARGE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CHARGE_MONGO_DATABASE: charge-db
+      CHARGE_MONGO_COLLECTION: charge
+      CRON_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
+      CRON_KAFKA_TOPIC: cron
+      CRON_KAFKA_GROUP_ID: group-1
+      CRON_KAFKA_POLL_TIMEOUT: 5
+      CRON_KAFKA_NUM_WORKERS: 3
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-calculate-billing
