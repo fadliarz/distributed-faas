@@ -52,7 +52,9 @@ inspect-connect:
 
 show-topics: 
 	@echo "Listing Kafka topics..."
+
 	docker exec distributed-faas-kafka-broker-1 kafka-topics --bootstrap-server localhost:9092 --list 
+
 	@echo "Kafka topics listed."
 
 count-messages: 
@@ -68,6 +70,13 @@ test-create-user-count-messages:
 	@echo "Counting messages in Kafka topics..."
 
 	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOfsetShell --broker-list localhost:9092 --topic cdc.user-db.user
+
+	@echo "Message count in Kafka topics complete."
+
+test-create-charge-count-messages:
+	@echo "Counting messages in Kafka topics..."
+
+	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic charge
 
 	@echo "Message count in Kafka topics complete."
 
