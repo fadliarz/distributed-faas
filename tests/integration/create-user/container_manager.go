@@ -39,8 +39,9 @@ type Containers struct {
 }
 
 type ConnectionStrings struct {
-	Mongo    string
-	Debezium string
+	Mongo       string
+	Debezium    string
+	UserService string
 }
 
 func NewContainerManager(ctx context.Context, config *TestConfig) *ContainerManager {
@@ -98,6 +99,7 @@ func (cm *ContainerManager) setupComposes() error {
 	cm.Composes.Kafka, err = compose.NewDockerComposeWith(
 		compose.StackIdentifier(cm.config.ComposeConfig.ProjectID),
 		compose.WithStackFiles(cm.config.ComposePaths.Common, cm.config.ComposePaths.Kafka),
+		compose.WithProfiles(cm.config.ComposeConfig.Profile),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Kafka Docker Compose stack: %w", err)
@@ -210,8 +212,19 @@ func (cm *ContainerManager) setupConnectionStrings() error {
 
 	cm.ConnectionStrings.Debezium = fmt.Sprintf("http://%s:%s", debeziumHost, debeziumPort.Port())
 
-	log.Info().Msgf("MongoDB connection string: %s", cm.ConnectionStrings.Mongo)
-	log.Info().Msgf("Debezium connection string: %s", cm.ConnectionStrings.Debezium)
+	// User Service
+	// Invocation Service
+	host, err = cm.Containers.UserService.Host(cm.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get User Service container host: %w", err)
+	}
+
+	port, err = cm.Containers.UserService.MappedPort(cm.ctx, "50050")
+	if err != nil {
+		return fmt.Errorf("failed to get User Service container port: %w", err)
+	}
+
+	cm.ConnectionStrings.UserService = host + ":" + port.Port()
 
 	return nil
 }

@@ -21,8 +21,8 @@ func NewArrangeHelper(t *testing.T, config *TestConfig) *ArrangeHelper {
 	}
 }
 
-func (h *ArrangeHelper) CreateUser(password string) (*user_service_v1.CreateUserResponse, error) {
-	conn, err := grpc.NewClient(h.config.GrpcEndpoints.UserService, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (h *ArrangeHelper) CreateUser(endpoint, password string) (*user_service_v1.CreateUserResponse, error) {
+	conn, err := grpc.NewClient(endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(h.t, err, "Failed to connect to gRPC server")
 
 	defer conn.Close()

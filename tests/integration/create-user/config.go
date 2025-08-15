@@ -15,8 +15,6 @@ type TestConfig struct {
 	KafkaConfig    *KafkaConfig
 	DebeziumConfig *DebeziumConfig
 
-	GrpcEndpoints *GrpcEndpoints
-
 	RequestDtos *RequestDtos
 }
 
@@ -80,10 +78,6 @@ type DebeziumConfig struct {
 	ReadyInterval time.Duration
 }
 
-type GrpcEndpoints struct {
-	UserService string
-}
-
 type RequestDtos struct {
 	CreateUser *CreateUserDto
 }
@@ -139,9 +133,6 @@ func NewDefaultTestConfig() *TestConfig {
 			RetryInterval:     2 * time.Second,
 			ReadyTimeout:      6 * time.Minute,
 			ReadyInterval:     2 * time.Second,
-		},
-		GrpcEndpoints: &GrpcEndpoints{
-			UserService: "localhost:50058",
 		},
 		RequestDtos: &RequestDtos{
 			CreateUser: &CreateUserDto{

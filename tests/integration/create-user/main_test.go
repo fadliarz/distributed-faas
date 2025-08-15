@@ -15,7 +15,7 @@ func (suite *CreateUserCDCIntegrationTest) TestUserPersisted() {
 	password := "test-password-123"
 
 	// Act
-	createUserResponse, err := suite.arrangeHelper.CreateUser(password)
+	createUserResponse, err := suite.arrangeHelper.CreateUser(suite.containerManager.ConnectionStrings.UserService, password)
 
 	// Assert
 	suite.assertionHelper.AssertUserCreatedSuccessfully(createUserResponse, err)
