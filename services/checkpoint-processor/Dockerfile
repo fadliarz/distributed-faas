@@ -17,11 +17,11 @@ COPY common/ ../../common/
 # Copy the infrastructure module (needed for local replacement) to the correct relative path
 COPY infrastructure/kafka ../../infrastructure/kafka/
 
-# Download dependencies
-RUN go mod download
-
 # Copy source code
 COPY services/checkpoint-processor/ .
+
+# Tidy up go.mod and go.sum files
+RUN go mod tidy
 
 # Build the application
 # The pre-compiled librdkafka library expects a glibc environment, which this image provides.

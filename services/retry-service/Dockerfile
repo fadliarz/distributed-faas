@@ -6,11 +6,11 @@ WORKDIR /app/services/retry-service
 # Copy go mod files
 COPY services/retry-service/go.mod services/retry-service/go.sum ./
 
-# Download dependencies
-RUN go mod download
-
 # Copy source code
 COPY services/retry-service/ .
+
+# Tidy up go.mod and go.sum files
+RUN go mod tidy
 
 # Build the application ---1
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .

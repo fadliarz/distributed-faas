@@ -6,11 +6,11 @@ WORKDIR /app/services/registrar-service
 # Copy go mod files
 COPY services/registrar-service/go.mod services/registrar-service/go.sum ./
 
-# Download dependencies
-RUN go mod download
-
 # Copy source code
 COPY services/registrar-service/ .
+
+# Tidy up go.mod and go.sum files
+RUN go mod tidy
 
 # Build the application ---1
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .

@@ -9,11 +9,11 @@ COPY services/machine/go.mod services/machine/go.sum ./
 # Copy the common module (needed for local replacement) to the correct relative path
 COPY common/ ../../common/
 
-# Download dependencies
-RUN go mod download
-
 # Copy source code
 COPY services/machine/ .
+
+# Tidy up go.mod and go.sum files
+RUN go mod tidy
 
 # Build the application ---1
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
