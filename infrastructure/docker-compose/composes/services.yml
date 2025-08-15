@@ -174,3 +174,39 @@ services:
     restart: always
     profiles:
       - test-create-user
+
+  distributed-faas-charge-service:
+    container_name: distributed-faas-charge-service
+    build:
+      context: ../../../
+      dockerfile: services/charge-service/Dockerfile
+    ports:
+      - 50059:50050
+    environment:
+      CHARGE_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
+      CHARGE_KAFKA_TOPIC: charge
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-create-charge
+
+  distributed-faas-accumulator-service:
+    container_name: distributed-faas-accumulator-service
+    build:
+      context: ../../../
+      dockerfile: services/accumulator-service/Dockerfile
+    environment:
+      CHARGE_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CHARGE_MONGO_DATABASE: charge-db
+      CHARGE_MONGO_COLLECTION: charge
+      CHARGE_KAFKA_BOOTSTRAP_SERVERS: distributed-faas-kafka-broker-1:9092
+      CHARGE_KAFKA_TOPIC: charge
+      CHARGE_KAFKA_GROUP_ID: group-1
+      CHARGE_KAFKA_POLL_DURATION_SEC: 5
+      CHARGE_KAFKA_MAX_BATCH_SIZE: 4
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-create-charge
