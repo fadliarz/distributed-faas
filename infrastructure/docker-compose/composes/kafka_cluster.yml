@@ -20,6 +20,7 @@ services:
       - test-create-invocation
       - test-create-user
       - test-create-charge
+      - test-calculate-billing
 
   distributed-faas-kafka-dlq-1:
     container_name: distributed-faas-kafka-dlq-1
@@ -43,6 +44,7 @@ services:
       - test-create-invocation
       - test-create-user
       - test-create-charge
+      - test-calculate-billing
 
   distributed-faas-debezium-connect:
     container_name: distributed-faas-debezium-connect
