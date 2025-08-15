@@ -9,11 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type CreateUserCDCIntegrationTest struct {
+type CreateChargeIntegrationTest struct {
 	IntegrationTestSuite
 }
 
-func (suite *CreateUserCDCIntegrationTest) TestUserPersisted() {
+func (suite *CreateChargeIntegrationTest) TestUserPersisted() {
 	// Arrange
 	userID1 := primitive.NewObjectID().Hex()
 	userID2 := primitive.NewObjectID().Hex()
@@ -78,6 +78,6 @@ func (suite *CreateUserCDCIntegrationTest) TestUserPersisted() {
 	suite.assertionHelper.AssertChargePersistedInMongoDB(suite.ctx, suite.mongoManager.Client, userID2, serviceID2, 2*amount)
 }
 
-func TestCreateUserCDCIntegrationTest(t *testing.T) {
-	suite.Run(t, new(CreateUserCDCIntegrationTest))
+func TestCreateChargeIntegrationTest(t *testing.T) {
+	suite.Run(t, new(CreateChargeIntegrationTest))
 }
