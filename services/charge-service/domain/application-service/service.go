@@ -4,16 +4,12 @@ import (
 	"context"
 )
 
-// ChargeApplicationServiceImpl implements the ChargeApplicationService interface
 type ChargeApplicationServiceImpl struct {
 	dataMapper ChargeDataMapper
 	aggregator ChargeAggregator
 }
 
-func NewChargeApplicationService(
-	dataMapper ChargeDataMapper,
-	aggregator ChargeAggregator,
-) ChargeApplicationService {
+func NewChargeApplicationService(dataMapper ChargeDataMapper, aggregator ChargeAggregator) ChargeApplicationService {
 	return &ChargeApplicationServiceImpl{
 		dataMapper: dataMapper,
 		aggregator: aggregator,

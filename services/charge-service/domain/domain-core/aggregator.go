@@ -2,13 +2,13 @@ package domain
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
-// ChargeAggregatorImpl implements the ChargeAggregator interface
 type ChargeAggregatorImpl struct {
 	domainService    ChargeDomainService
 	producer         ChargeProducer
@@ -21,11 +21,7 @@ type ChargeAggregatorImpl struct {
 	stopChan         chan struct{}
 }
 
-func NewChargeAggregator(
-	domainService ChargeDomainService,
-	producer ChargeProducer,
-	duration time.Duration,
-) ChargeAggregator {
+func NewChargeAggregator(domainService ChargeDomainService, producer ChargeProducer, duration time.Duration) ChargeAggregator {
 	return &ChargeAggregatorImpl{
 		domainService: domainService,
 		producer:      producer,
@@ -37,7 +33,7 @@ func NewChargeAggregator(
 
 func (a *ChargeAggregatorImpl) AddCharge(ctx context.Context, charge *Charge) error {
 	if !a.isStarted() {
-		return ErrAggregatorNotStarted
+		return fmt.Errorf("charge aggregator is not started")
 	}
 
 	if err := a.domainService.ValidateCharge(charge); err != nil {
@@ -55,15 +51,7 @@ func (a *ChargeAggregatorImpl) AddCharge(ctx context.Context, charge *Charge) er
 		a.aggregates[key] = aggregate
 	}
 
-	aggregate.AddCharge(charge)
-
-	log.Info().
-		Str("user_id", charge.UserID.String()).
-		Str("service_id", charge.ServiceID.String()).
-		Int64("amount", charge.Amount.Int64()).
-		Int64("total_amount", aggregate.TotalAmount.Int64()).
-		Int64("charge_count", aggregate.ChargeCount).
-		Msg("Charge added to aggregate")
+	aggregate.AggregatedAmount = aggregate.AggregatedAmount.Add(charge.Amount)
 
 	return nil
 }
@@ -77,8 +65,6 @@ func (a *ChargeAggregatorImpl) Start(ctx context.Context) {
 	a.isRunning = true
 	a.runningMutex.Unlock()
 
-	log.Info().Dur("duration", a.duration).Msg("Starting charge aggregator")
-
 	a.resetTimer()
 
 	for {
@@ -87,13 +73,11 @@ func (a *ChargeAggregatorImpl) Start(ctx context.Context) {
 			a.runningMutex.Lock()
 			a.isRunning = false
 			a.runningMutex.Unlock()
-			log.Info().Msg("Charge aggregator stopped")
 			return
 		case <-ctx.Done():
 			a.runningMutex.Lock()
 			a.isRunning = false
 			a.runningMutex.Unlock()
-			log.Info().Msg("Charge aggregator stopped due to context cancellation")
 			return
 		case <-a.aggregationTimer.C:
 			a.flushAggregates(ctx)
@@ -110,7 +94,9 @@ func (a *ChargeAggregatorImpl) Stop() {
 
 func (a *ChargeAggregatorImpl) isStarted() bool {
 	a.runningMutex.RLock()
+
 	defer a.runningMutex.RUnlock()
+
 	return a.isRunning
 }
 
@@ -118,6 +104,7 @@ func (a *ChargeAggregatorImpl) resetTimer() {
 	if a.aggregationTimer != nil {
 		a.aggregationTimer.Stop()
 	}
+
 	a.aggregationTimer = time.NewTimer(a.duration)
 }
 
@@ -126,7 +113,9 @@ func (a *ChargeAggregatorImpl) flushAggregates(ctx context.Context) {
 
 	if len(a.aggregates) == 0 {
 		a.aggregatesMutex.Unlock()
+
 		log.Debug().Msg("No aggregates to flush")
+
 		return
 	}
 
@@ -145,6 +134,7 @@ func (a *ChargeAggregatorImpl) flushAggregates(ctx context.Context) {
 	// Send aggregates to Kafka
 	if err := a.producer.SendAggregatedCharges(ctx, aggregatesToSend); err != nil {
 		log.Error().Err(err).Msg("Failed to send aggregated charges")
+
 		// TODO: Implement retry logic or dead letter queue
 	}
 }

@@ -34,7 +34,7 @@ func loadEnv(config *Config) {
 		log.Warn().Msg("No .env file found, using default configuration")
 	}
 
-	if port := os.Getenv("CHARGE_SERVICE_PORT"); port != "" {
+	if port := os.Getenv("PORT"); port != "" {
 		config.Port = ":" + port
 
 		log.Info().Msgf("Using port from .env: %s", config.Port)
@@ -69,7 +69,7 @@ func setupChargeAggregator(ctx context.Context) (application.ChargeAggregator, e
 	chargeAggregator := domain.NewChargeAggregator(
 		domain.NewChargeDomainService(),
 		producer,
-		5*time.Minute, // aggregation duration
+		5*time.Second, // aggregation duration
 	)
 
 	// Start the aggregator

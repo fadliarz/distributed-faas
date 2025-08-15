@@ -4,7 +4,6 @@ import (
 	"context"
 )
 
-// CommandHandler handles application commands
 type CommandHandler struct {
 	service ChargeApplicationService
 }

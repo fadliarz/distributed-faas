@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/fadliarz/distributed-faas/services/charge-service/config"
@@ -13,18 +12,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ChargeAggregateMessage represents the JSON structure sent to Kafka
-type ChargeAggregateMessage struct {
-	UserID      string    `json:"user_id"`
-	ServiceID   string    `json:"service_id"`
-	TotalAmount int64     `json:"total_amount"`
-	ChargeCount int64     `json:"charge_count"`
-	FirstCharge int64     `json:"first_charge"`
-	LastCharge  int64     `json:"last_charge"`
-	ProcessedAt time.Time `json:"processed_at"`
+type ChargeEvent struct {
+	UserID           string `json:"user_id"`
+	ServiceID        string `json:"service_id"`
+	AggregatedAmount int64  `json:"aggregated_amount"`
 }
 
-// ChargeProducerImpl implements the ChargeProducer interface
 type ChargeProducerImpl struct {
 	producer *kafka.Producer
 	config   *config.ChargeProducerConfig
@@ -41,37 +34,22 @@ func NewChargeProducer(ctx context.Context, config *config.ChargeProducerConfig)
 		config:   config,
 	}
 
-	// Start delivery report handler
 	go chargeProducer.handleDeliveryReports(ctx)
 
 	return chargeProducer, nil
 }
 
 func (p *ChargeProducerImpl) SendAggregatedCharges(ctx context.Context, aggregates []*domain.ChargeAggregate) error {
-	log.Info().
-		Int("count", len(aggregates)).
-		Str("topic", p.config.Topic).
-		Msg("Sending aggregated charges to Kafka")
-
 	for _, aggregate := range aggregates {
-		message := &ChargeAggregateMessage{
-			UserID:      aggregate.UserID.String(),
-			ServiceID:   aggregate.ServiceID.String(),
-			TotalAmount: aggregate.TotalAmount.Int64(),
-			ChargeCount: aggregate.ChargeCount,
-			FirstCharge: aggregate.FirstCharge.Int64(),
-			LastCharge:  aggregate.LastCharge.Int64(),
-			ProcessedAt: time.Now(),
+		message := &ChargeEvent{
+			UserID:           aggregate.UserID.String(),
+			ServiceID:        aggregate.ServiceID.String(),
+			AggregatedAmount: aggregate.AggregatedAmount.Int64(),
 		}
 
 		// Convert to JSON
 		jsonData, err := json.Marshal(message)
 		if err != nil {
-			log.Error().
-				Err(err).
-				Str("user_id", aggregate.UserID.String()).
-				Str("service_id", aggregate.ServiceID.String()).
-				Msg("Failed to marshal charge aggregate to JSON")
 			return fmt.Errorf("failed to marshal charge aggregate to JSON: %w", err)
 		}
 
@@ -88,22 +66,8 @@ func (p *ChargeProducerImpl) SendAggregatedCharges(ctx context.Context, aggregat
 		}, nil)
 
 		if err != nil {
-			log.Error().
-				Err(err).
-				Str("key", key).
-				Str("user_id", aggregate.UserID.String()).
-				Str("service_id", aggregate.ServiceID.String()).
-				Msg("Failed to send charge aggregate to Kafka")
 			return fmt.Errorf("failed to send charge aggregate with key %s: %w", key, err)
 		}
-
-		log.Info().
-			Str("key", key).
-			Str("user_id", aggregate.UserID.String()).
-			Str("service_id", aggregate.ServiceID.String()).
-			Int64("total_amount", aggregate.TotalAmount.Int64()).
-			Int64("charge_count", aggregate.ChargeCount).
-			Msg("Successfully queued charge aggregate to Kafka")
 	}
 
 	return nil

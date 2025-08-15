@@ -1,10 +1,12 @@
 package application
 
 import (
+	"time"
+
+	"github.com/fadliarz/distributed-faas/common/valueobject"
 	"github.com/fadliarz/distributed-faas/services/charge-service/domain/domain-core"
 )
 
-// ChargeDataMapperImpl implements the ChargeDataMapper interface
 type ChargeDataMapperImpl struct{}
 
 func NewChargeDataMapper() ChargeDataMapper {
@@ -12,9 +14,14 @@ func NewChargeDataMapper() ChargeDataMapper {
 }
 
 func (m *ChargeDataMapperImpl) CreateChargeCommandToCharge(cmd *CreateChargeCommand) (*domain.Charge, error) {
-	userID := domain.NewUserID(cmd.UserID)
-	serviceID := domain.NewServiceID(cmd.ServiceID)
-	amount := domain.NewAmount(cmd.Amount)
+	userID := valueobject.NewUserID(cmd.UserID)
+	serviceID := valueobject.NewServiceID(cmd.ServiceID)
+	amount := valueobject.NewAmount(cmd.Amount)
 
-	return domain.NewCharge(userID, serviceID, amount), nil
+	return &domain.Charge{
+		UserID:    userID,
+		ServiceID: serviceID,
+		Amount:    amount,
+		Timestamp: valueobject.NewTimestamp(time.Now().Unix()),
+	}, nil
 }

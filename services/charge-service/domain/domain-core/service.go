@@ -1,10 +1,9 @@
 package domain
 
 import (
-	"strings"
+	"fmt"
 )
 
-// ChargeDomainServiceImpl implements the ChargeDomainService interface
 type ChargeDomainServiceImpl struct{}
 
 func NewChargeDomainService() ChargeDomainService {
@@ -13,19 +12,19 @@ func NewChargeDomainService() ChargeDomainService {
 
 func (s *ChargeDomainServiceImpl) ValidateCharge(charge *Charge) error {
 	if charge == nil {
-		return ErrInvalidChargeAmount
+		return fmt.Errorf("charge cannot be nil")
 	}
 
 	if charge.Amount <= 0 {
-		return ErrInvalidChargeAmount
+		return fmt.Errorf("charge amount must be greater than zero")
 	}
 
-	if strings.TrimSpace(charge.UserID.String()) == "" {
-		return ErrInvalidUserID
+	if charge.UserID.String() == "" {
+		return fmt.Errorf("user ID cannot be empty")
 	}
 
-	if strings.TrimSpace(charge.ServiceID.String()) == "" {
-		return ErrInvalidServiceID
+	if charge.ServiceID.String() == "" {
+		return fmt.Errorf("service ID cannot be empty")
 	}
 
 	return nil
