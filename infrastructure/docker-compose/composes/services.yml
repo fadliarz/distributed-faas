@@ -228,3 +228,21 @@ services:
     restart: always
     profiles:
       - test-calculate-billing
+  
+  distributed-faas-billing-service:
+    container_name: distributed-faas-billing-service
+    build:
+      context: ../../../
+      dockerfile: services/billing-service/Dockerfile
+    ports:
+      - 50056:50050
+    environment:
+      PORT: 50050
+      BILLING_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      BILLING_MONGO_DATABASE: billing-db
+      BILLING_MONGO_COLLECTION: billing
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-calculate-billing
