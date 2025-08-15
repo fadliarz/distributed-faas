@@ -37,11 +37,15 @@ type Containers struct {
 	Debezium          testcontainers.Container
 	FunctionService   testcontainers.Container
 	InvocationService testcontainers.Container
+	RegistrarService  testcontainers.Container
 }
 
 type ConnectionStrings struct {
-	Mongo    string
-	Debezium string
+	Mongo             string
+	Debezium          string
+	FunctionService   string
+	InvocationService string
+	RegistrarService  string
 }
 
 func NewContainerManager(ctx context.Context, config *TestConfig) *ContainerManager {
@@ -99,6 +103,7 @@ func (cm *ContainerManager) setupComposes() error {
 	cm.Composes.Kafka, err = compose.NewDockerComposeWith(
 		compose.StackIdentifier(cm.config.ComposeConfig.ProjectID),
 		compose.WithStackFiles(cm.config.ComposePaths.Common, cm.config.ComposePaths.Kafka),
+		compose.WithProfiles(cm.config.ComposeConfig.Profile),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Kafka Docker Compose stack: %w", err)
@@ -108,6 +113,7 @@ func (cm *ContainerManager) setupComposes() error {
 	cm.Composes.Services, err = compose.NewDockerComposeWith(
 		compose.StackIdentifier(cm.config.ComposeConfig.ProjectID),
 		compose.WithStackFiles(cm.config.ComposePaths.Common, cm.config.ComposePaths.Services),
+		compose.WithProfiles(cm.config.ComposeConfig.Profile),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Services Docker Compose stack: %w", err)
@@ -139,6 +145,16 @@ func (cm *ContainerManager) startContainers() error {
 		cm.Containers.FunctionService, err = cm.Composes.Services.ServiceContainer(cm.ctx, cm.config.ContainerNames.FunctionService)
 		if err != nil {
 			return fmt.Errorf("failed to get Function Service container: %w", err)
+		}
+
+		cm.Containers.InvocationService, err = cm.Composes.Services.ServiceContainer(cm.ctx, cm.config.ContainerNames.InvocationService)
+		if err != nil {
+			return fmt.Errorf("failed to get Invocation Service container: %w", err)
+		}
+
+		cm.Containers.RegistrarService, err = cm.Composes.Services.ServiceContainer(cm.ctx, cm.config.ContainerNames.RegistrarService)
+		if err != nil {
+			return fmt.Errorf("failed to get Registrar Service container: %w", err)
 		}
 
 		return nil
@@ -204,6 +220,45 @@ func (cm *ContainerManager) setupConnectionStrings() error {
 	}
 
 	cm.ConnectionStrings.Debezium = fmt.Sprintf("http://%s:%s", host, port.Port())
+
+	// Function Service
+	host, err = cm.Containers.FunctionService.Host(cm.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get Function Service container host: %w", err)
+	}
+
+	port, err = cm.Containers.FunctionService.MappedPort(cm.ctx, "50050")
+	if err != nil {
+		return fmt.Errorf("failed to get Function Service container port: %w", err)
+	}
+
+	cm.ConnectionStrings.FunctionService = host + ":" + port.Port()
+
+	// Invocation Service
+	host, err = cm.Containers.InvocationService.Host(cm.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get Invocation Service container host: %w", err)
+	}
+
+	port, err = cm.Containers.InvocationService.MappedPort(cm.ctx, "50050")
+	if err != nil {
+		return fmt.Errorf("failed to get Invocation Service container port: %w", err)
+	}
+
+	cm.ConnectionStrings.InvocationService = host + ":" + port.Port()
+
+	// Registrar Service
+	host, err = cm.Containers.RegistrarService.Host(cm.ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get Registrar Service container host: %w", err)
+	}
+
+	port, err = cm.Containers.RegistrarService.MappedPort(cm.ctx, "50050")
+	if err != nil {
+		return fmt.Errorf("failed to get Registrar Service container port: %w", err)
+	}
+
+	cm.ConnectionStrings.RegistrarService = host + ":" + port.Port()
 
 	return nil
 }

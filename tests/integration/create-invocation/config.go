@@ -15,8 +15,6 @@ type TestConfig struct {
 	KafkaConfig    *KafkaConfig
 	DebeziumConfig *DebeziumConfig
 
-	GrpcEndpoints *GrpcEndpoints
-
 	RequestDtos *RequestDtos
 }
 
@@ -29,10 +27,12 @@ type ComposePaths struct {
 }
 
 type ContainerNames struct {
-	Mongo           string
-	Kafka           string
-	Debezium        string
-	FunctionService string
+	Mongo             string
+	Kafka             string
+	Debezium          string
+	FunctionService   string
+	InvocationService string
+	RegistrarService  string
 }
 
 type ComposeConfig struct {
@@ -76,12 +76,6 @@ type DebeziumConfig struct {
 	ReadyInterval time.Duration
 }
 
-type GrpcEndpoints struct {
-	FunctionService   string
-	InvocationService string
-	RegistrarService  string
-}
-
 type RequestDtos struct {
 	MachineAddress string
 }
@@ -97,14 +91,16 @@ func NewDefaultTestConfig() *TestConfig {
 			Services:  "/home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml",
 		},
 		ContainerNames: &ContainerNames{
-			Mongo:           "distributed-faas-mongo",
-			Kafka:           "distributed-faas-kafka-broker-1",
-			Debezium:        "distributed-faas-debezium-connect",
-			FunctionService: "distributed-faas-function-service",
+			Mongo:             "distributed-faas-mongo",
+			Kafka:             "distributed-faas-kafka-broker-1",
+			Debezium:          "distributed-faas-debezium-connect",
+			FunctionService:   "distributed-faas-function-service",
+			InvocationService: "distributed-faas-invocation-service",
+			RegistrarService:  "distributed-faas-registrar-service",
 		},
 		ComposeConfig: &ComposeConfig{
 			ProjectID: uuid.NewString(),
-			Profile:   "test-function-cdc",
+			Profile:   "test-create-invocation",
 		},
 		MongoConfig: &MongoConfig{
 			// Function MongoDB configuration
@@ -138,13 +134,8 @@ func NewDefaultTestConfig() *TestConfig {
 			ReadyTimeout:  6 * time.Second,
 			ReadyInterval: 2 * time.Second,
 		},
-		GrpcEndpoints: &GrpcEndpoints{
-			FunctionService:   "localhost:50051",
-			InvocationService: "localhost:50053",
-			RegistrarService:  "localhost:50057",
-		},
 		RequestDtos: &RequestDtos{
-			MachineAddress: "distributed-faas-machine:50055",
+			MachineAddress: "distributed-faas-machine:50050",
 		},
 	}
 }
