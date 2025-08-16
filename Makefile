@@ -176,6 +176,9 @@ gen-billing-service:
 test-create-invocation-verbose:
 	@echo "Running integration tests for CDC function"
 
+	@echo "Rebuilding Docker images..."
+	-docker-compose -f /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml build distributed-faas-function-service distributed-faas-invocation-service distributed-faas-dispatcher-service  distributed-faas-machine distributed-faas-checkpoint-processor ddistributed-faas-registrar-service distributed-faas-retry-service 2>/dev/null || true
+
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka
@@ -195,9 +198,8 @@ test-create-invocation-verbose:
 test-create-user-verbose:
 	@echo "Running integration tests for Create User"
 
-	@echo "Removing existing Docker images..."
-	-docker rmi distributed-faas-distributed-faas-user-processor:latest 2>/dev/null || true
-	-docker rmi distributed-faas-distributed-faas-user-service:latest 2>/dev/null || true
+	@echo "Rebuilding Docker images..."
+	-docker-compose -f /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml build distributed-faas-user-processor distributed-faas-user-service 2>/dev/null || true
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
@@ -218,9 +220,8 @@ test-create-user-verbose:
 test-create-charge-verbose:
 	@echo "Running integration tests for Create Charge"
 
-	@echo "Removing existing Docker images..."
-	-docker rmi distributed-faas-distributed-faas-charge-service:latest 2>/dev/null || true
-	-docker rmi distributed-faas-distributed-faas-accumulator-service:latest 2>/dev/null || true
+	@echo "Rebuilding Docker images..."
+	-docker-compose -f /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml build distributed-faas-charge-service distributed-faas-accumulator-service 2>/dev/null || true
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
@@ -241,9 +242,8 @@ test-create-charge-verbose:
 test-calculate-billing-verbose:
 	@echo "Running integration tests for Calculate Billing"
 
-	@echo "Removing existing Docker images..."
-	-docker rmi distributed-faas-distributed-faas-billing-calculator-service:latest 2>/dev/null || true
-	-docker rmi distributed-faas-distributed-faas-billing-service:latest 2>/dev/null || true
+	@echo "Rebuilding Docker images..."
+	-docker-compose -f /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml build distributed-faas-billing-calculator-service distributed-faas-billing-service 2>/dev/null || true
 
 	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
 
@@ -260,3 +260,26 @@ test-calculate-billing-verbose:
 	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
 
 	go test -v -count=1 ./tests/integration/calculate-billing
+
+
+test-generate-billing-verbose:
+	@echo "Running integration tests for Generate Billing"
+
+	@echo "Rebuilding Docker images..."
+	-docker-compose -f /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/services.yml build distributed-faas-billing-cron-service 2>/dev/null || true
+
+	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper
+
+	yes | sudo rm -rf /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/data
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/zookeeper/transactions
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/broker-1
+
+	mkdir -p /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes/kafka/dlq-1
+
+	sudo chown -R 1000:1000 /home/fadlinux/workspace/distributed-faas/infrastructure/docker-compose/composes/volumes
+
+	go test -v -count=1 ./tests/integration/generate-billing

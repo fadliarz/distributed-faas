@@ -5,6 +5,7 @@ use (
 	./infrastructure/kafka
 	./services/accumulator-service
 	./services/billing-calculator-service
+	./services/billing-cron-service
 	./services/billing-service
 	./services/charge-service
 	./services/checkpoint-processor
