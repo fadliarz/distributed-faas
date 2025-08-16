@@ -80,6 +80,13 @@ test-create-charge-count-messages:
 
 	@echo "Message count in Kafka topics complete."
 
+test-generate-billing-count-messages:
+	@echo "Counting messages in Kafka topics..."
+
+	docker exec distributed-faas-kafka-broker-1 kafka-run-class kafka.tools.GetOffsetShell --broker-list localhost:9092 --topic cdc.cron-db.cron
+
+	@echo "Message count in Kafka topics complete."
+
 # Execute related commands
 
 bash-mongo:	
