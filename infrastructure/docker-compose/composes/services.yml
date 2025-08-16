@@ -246,3 +246,21 @@ services:
     restart: always
     profiles:
       - test-calculate-billing
+
+  distributed-faas-billing-cron-service:
+    container_name: distributed-faas-billing-cron-service
+    build:
+      context: ../../../
+      dockerfile: services/billing-cron-service/Dockerfile
+    environment:
+      CRON_MONGO_URI: mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true
+      CRON_MONGO_DATABASE: cron-db
+      CRON_MONGO_COLLECTION: cron
+      CRON_INTERVAL_IN_SEC: 3
+    networks:
+      - ${GLOBAL_NETWORK:-distributed-faas}
+    restart: always
+    profiles:
+      - test-generate-billing
+
+  
