@@ -19,13 +19,13 @@ func (m *CronDataAccessMapperImpl) Entity(cron *domain.Cron) (*CronEntity, error
 		return nil, nil
 	}
 
-	primitiveUserID, err := primitive.ObjectIDFromHex(cron.UserID.String())
+	userID, err := primitive.ObjectIDFromHex(cron.UserID.String())
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
 	return &CronEntity{
-		UserID:      primitiveUserID.Hex(),
+		UserID:      userID,
 		LastBilling: cron.LastBilling.Int64(),
 	}, nil
 }
@@ -36,7 +36,7 @@ func (m *CronDataAccessMapperImpl) Domain(entity *CronEntity) *domain.Cron {
 	}
 
 	return &domain.Cron{
-		UserID:      valueobject.NewUserID(entity.UserID),
+		UserID:      valueobject.NewUserID(entity.UserID.Hex()),
 		LastBilling: valueobject.NewLastBilled(entity.LastBilling),
 	}
 }

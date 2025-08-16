@@ -2,13 +2,14 @@ package repository
 
 import (
 	domain "github.com/fadliarz/distributed-faas/services/user-processor/domain/domain-core"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Entity
 
 type CronEntity struct {
-	UserID      string `bson:"_id,omitempty"`
-	LastBilling int64  `bson:"last_billing"`
+	UserID      primitive.ObjectID `bson:"_id,omitempty"`
+	LastBilling int64              `bson:"last_billing"`
 }
 
 // Mapper
