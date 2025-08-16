@@ -143,6 +143,41 @@ while [[ ! "$connectorCheckResult" == *'"state":"RUNNING"'* ]]; do
     connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/checkpoint-cdc/status')
 done
 
+# cron-db connector
+curl --location --request POST 'localhost:8083/connectors' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "cron-cdc",
+    "config": {
+            "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+            "mongodb.connection.string": "mongodb://admin:password@distributed-faas-mongo:27017/?replicaSet=rs0&directConnection=true",
+            "topic.prefix": "cdc",
+            "database.include.list": "cron-db",
+            "collection.include.list": "cron-db.cron",
+
+            "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "key.converter.schemas.enable": false,
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "value.converter.schemas.enable": false,
+
+            "transforms": "filter,unwrap",
+
+            "transforms.filter.type": "io.debezium.transforms.Filter",
+            "transforms.filter.language": "jsr223.groovy",
+            "transforms.filter.condition": "value.op == 'c' || value.op == 'u'",
+
+            "transforms.unwrap.type": "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState"
+    }
+}'
+
+connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/cron-cdc/status')
+
+while [[ ! "$connectorCheckResult" == *'"state":"RUNNING"'* ]]; do
+    >&2 echo "Connector (cron-cdc) is not running yet, waiting for it to start, connector check result: $connectorCheckResult"
+    sleep 2
+    connectorCheckResult=$(curl --location --request GET 'localhost:8083/connectors/cron-cdc/status')
+done
+
 #
 #
 # TEST DATA
