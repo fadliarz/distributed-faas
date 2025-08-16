@@ -41,7 +41,7 @@ func (ah *AssertionHelper) AssertChargesPersistedInKafka(ctx context.Context, co
 		msg, err := consumer.ReadMessage(3 * time.Second)
 		if err != nil {
 			if err.(kafka.Error).Code() == kafka.ErrTimedOut {
-				log.Debug().Msg("[AssertUserPersistedInKafka] No message received from Kafka within the timeout period, retrying...")
+				log.Debug().Msg("[AssertChargesPersistedInKafka] No message received from Kafka within the timeout period, retrying...")
 
 				continue
 			}
@@ -53,7 +53,7 @@ func (ah *AssertionHelper) AssertChargesPersistedInKafka(ctx context.Context, co
 			var event ChargeEvent
 			err := json.Unmarshal(msg.Value, &event)
 			if err != nil {
-				log.Debug().Err(err).Msg("[AssertUserPersistedInKafka] Failed to unmarshal Kafka message")
+				log.Debug().Err(err).Msg("[AssertChargesPersistedInKafka] Failed to unmarshal Kafka message")
 
 				continue
 			}

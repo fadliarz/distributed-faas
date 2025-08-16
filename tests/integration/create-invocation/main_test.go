@@ -15,11 +15,13 @@ type CreateFunctionCDCIntegrationTest struct {
 func (suite *CreateFunctionCDCIntegrationTest) TestInvocationPersisted() {
 	// Arrange
 	createFunctionResponse := suite.arrangeHelper.CreateFunction(suite.containerManager.ConnectionStrings.FunctionService)
-	suite.arrangeHelper.UpdateFunctionSourceCodeURL(suite.containerManager.ConnectionStrings.FunctionService, createFunctionResponse.UserId, createFunctionResponse.FunctionId, "user-id-123/main.js")
+	suite.arrangeHelper.UpdateFunctionSourceCodeURL(suite.containerManager.ConnectionStrings.FunctionService, createFunctionResponse.UserId,
+		createFunctionResponse.FunctionId, "user-id-123/main.js")
 	suite.arrangeHelper.RegisterMachine(suite.containerManager.ConnectionStrings.RegistrarService)
 
 	// Act
-	createInvocationResponse, err := suite.arrangeHelper.CreateInvocation(suite.containerManager.ConnectionStrings.InvocationService, createFunctionResponse.UserId, createFunctionResponse.FunctionId)
+	createInvocationResponse, err := suite.arrangeHelper.CreateInvocation(suite.containerManager.ConnectionStrings.InvocationService, createFunctionResponse.UserId,
+		createFunctionResponse.FunctionId)
 
 	// Assert
 	suite.assertionHelper.AssertInvocationCreatedSuccessfully(createInvocationResponse, err)
@@ -35,7 +37,8 @@ func (suite *CreateFunctionCDCIntegrationTest) TestInvocation_FunctionNotExists_
 	suite.arrangeHelper.RegisterMachine(suite.containerManager.ConnectionStrings.RegistrarService)
 
 	// Act
-	createInvocationResponse, err := suite.arrangeHelper.CreateInvocation(suite.containerManager.ConnectionStrings.InvocationService, uuid.NewString(), primitive.NewObjectID().Hex())
+	createInvocationResponse, err := suite.arrangeHelper.CreateInvocation(suite.containerManager.ConnectionStrings.InvocationService,
+		uuid.NewString(), primitive.NewObjectID().Hex())
 
 	// Assert
 	suite.assertionHelper.AssertInvocationUnauthorized(createInvocationResponse, err)

@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/suite"
@@ -113,8 +112,6 @@ func (suite *IntegrationTestSuite) SetupTest() {
 func (suite *IntegrationTestSuite) setupInfrastructure() {
 	err := suite.containerManager.SetupContainers()
 	suite.Require().NoError(err, "Failed to setup infrastructure")
-
-	time.Sleep(60 * time.Second)
 
 	err = suite.mongoManager.SetupClient(suite.containerManager.ConnectionStrings.Mongo)
 	suite.Require().NoError(err, "Failed to setup MongoDB client")
